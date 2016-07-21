@@ -2,6 +2,8 @@
 
 namespace LibreEHR\Core\Contracts;
 
+use LibreEHR\Core\Emr\Criteria\AbstractCriteria;
+
 abstract class AbstractRepository implements RepositoryInterface
 {
     protected $finder = null;
