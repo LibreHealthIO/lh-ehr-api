@@ -4,7 +4,7 @@
     "description": ":package_description",
     "keywords": [
         "LibreEHR",
-        ":package_name"
+        "LibreEHR Core"
     ],
     "homepage": "https://github.com/:vendor/:package_name",
     "license": "MIT",
