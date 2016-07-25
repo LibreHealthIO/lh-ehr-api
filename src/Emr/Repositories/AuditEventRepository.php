@@ -6,7 +6,7 @@
  * Time: 9:44 AM
  */
 
-namespace LibreEHR\Core\Emr\Repositories;
+namespace LibreEHR\Core\Emr\Repository;
 
 use LibreEHR\Core\Contracts\AuditEventInterface;
 use LibreEHR\Core\Contracts\AuditEventRepositoryInterface;

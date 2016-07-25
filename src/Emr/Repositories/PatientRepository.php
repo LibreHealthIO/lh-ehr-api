@@ -6,9 +6,8 @@
  * Time: 9:44 AM
  */
 
-namespace LibreEHR\Core\Emr\Repositories;
+namespace LibreEHR\Core\Emr\Repository;
 
-use LibreEHR\Core\Contracts\AbstractRepository;
 use LibreEHR\Core\Contracts\DocumentRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 use LibreEHR\Core\Contracts\PatientFinderInterface;
@@ -47,6 +46,7 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
             $patientInterface->save();
             $patientInterface = $this->get( $patientInterface->id );
 
+            // TODO use document Repository to get the path from some config
             $docpath = "/Users/kchapple/Dev/www/openemr_github/sites/default/documents";
             mkdir( $docpath."/".$patientInterface->getPid() );
             $filepath = $docpath."/".$patientInterface->getPid()."/".$photo->filename;

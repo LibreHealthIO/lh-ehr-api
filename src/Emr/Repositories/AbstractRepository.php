@@ -1,12 +1,15 @@
 <?php
 
-namespace LibreEHR\Core\Contracts;
+namespace LibreEHR\Core\Repository;
 
 use LibreEHR\Core\Emr\Criteria\AbstractCriteria;
 
 abstract class AbstractRepository implements RepositoryInterface
 {
-    protected $finder = null;
+    /**
+     * @var Collection
+     */
+    protected $criteria;
 
     public function find( AbstractCriteria $criteria )
     {

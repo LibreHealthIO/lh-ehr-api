@@ -6,9 +6,8 @@
  * Time: 9:44 AM
  */
 
-namespace LibreEHR\Core\Emr\Repositories;
+namespace LibreEHR\Core\Emr\Repository;
 
-use LibreEHR\Core\Contracts\AbstractRepository;
 use Illuminate\Support\Facades\DB;
 use LibreEHR\Core\Contracts\DocumentRepositoryInterface;
 use LibreEHR\Core\Contracts\DocumentInterface;
