@@ -13,6 +13,22 @@ use LibreEHR\Core\Contracts\AuditEventRepositoryInterface;
 
 class AuditEventRepository implements AuditEventRepositoryInterface
 {
+
+    public function model()
+    {
+        return '\LibreEHR\Core\Emr\Eloquent\AuditEvent';
+    }
+
+    public function makeModel()
+    {
+        return App::make( '\LibreEHR\Core\Emr\Contracts\AuditEventInterface' );
+    }
+
+    public function find()
+    {
+        return parent::find();
+    }
+
     public function create( AuditEventInterface $auditEventInterface )
     {
         if ( is_a( $auditEventInterface, '\LibreEHR\Core\Emr\Eloquent\AuditEvent' ) ) {
@@ -20,10 +36,6 @@ class AuditEventRepository implements AuditEventRepositoryInterface
         }
 
         return $auditEventInterface;
-    }
-
-    public function find()
-    {
     }
 
 }

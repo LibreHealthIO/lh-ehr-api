@@ -2,7 +2,7 @@
 
 namespace LibreEHR\Core\Contracts;
 
-interface ModelInterface
+interface ModelInterface extends BaseInterface
 {
 
 }

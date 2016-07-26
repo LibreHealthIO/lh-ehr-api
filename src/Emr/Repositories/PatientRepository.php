@@ -19,14 +19,24 @@ use LibreEHR\Core\Emr\Eloquent\PatientData as Patient;
 
 class PatientRepository extends AbstractRepository implements PatientRepositoryInterface
 {
-    public function __construct( PatientFinderInterface $finder )
+    public function model()
     {
-        $this->finder = $finder;
+        return '\LibreEHR\Core\Emr\Eloquent\PatientData';
+    }
+
+    public function makeModel()
+    {
+        return App::make( '\LibreEHR\Core\Emr\Contracts\PatientInterface' );
+    }
+
+    public function find()
+    {
+        return parent::find();
     }
 
     public function create( PatientInterface $patientInterface )
     {
-        if ( is_a( $patientInterface, '\LibreEHR\Core\Emr\Eloquent\PatientData' ) ) {
+        if ( is_a( $patientInterface, $this->model() ) ) {
             $photo = $patientInterface->getPhoto();
 
             if ( !$patientInterface->getId() ) {
@@ -94,9 +104,9 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
 
     }
 
-    public function fetchAll()
+    public function fetchAll( ModelInterface $model )
     {
-        return Patient::all();
+        return $model->all();
     }
 
     public function get( $id )

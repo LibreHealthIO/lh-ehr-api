@@ -6,5 +6,5 @@ use LibreEHR\Core\Emr\Criteria\AbstractCriteria;
 
 interface RepositoryInterface
 {
-    public function find( AbstractCriteria $criteria );
+    public function find();
 }

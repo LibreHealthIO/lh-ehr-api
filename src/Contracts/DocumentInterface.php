@@ -2,7 +2,7 @@
 
 namespace LibreEHR\Core\Contracts;
 
-interface DocumentInterface extends BaseInterface
+interface DocumentInterface extends ModelInterface
 {
     public function addCategory( $categoryId );
     public function getCategories();
