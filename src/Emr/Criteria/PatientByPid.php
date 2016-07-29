@@ -11,16 +11,5 @@ use LibreEHR\Core\Emr\Eloquent\PatientData as Patient;
 
 class PatientByPid extends AbstractCriteria
 {
-    public function execute()
-    {
-        $patient = null;
-        try {
-            $patient = Patient::where( 'pid', $this->pid )->firstOrFail();
-            return $patient;
-        } catch ( ErrorException $e ) {
-            //Do stuff if it doesn't exist.
-        }
 
-        return $patient;
-    }
 }

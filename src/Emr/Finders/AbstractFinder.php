@@ -6,25 +6,27 @@
  * Time: 10:55 AM
  */
 
+namespace LibreEHR\Core\Emr\Finders;
+
+use LibreEHR\Core\Contracts\CriteriaInterface;
+
 class AbstractFinder
 {
+    protected $criteria = array();
+
     /**
-     * @param Criteria $criteria
+     * @param CriteriaInterface $criteria
      * @return $this
      */
-    public function pushCriteria( AbstractCriteria $criteria )
+    public function pushCriteria( CriteriaInterface $criteria )
     {
-        // Find existing criteria
-        $key = $this->criteria->search(function ($item) use ($criteria) {
-            return (is_object($item) AND (get_class($item) == get_class($criteria)));
-        });
-        // Remove old criteria
-        if (is_int($key)) {
-            $this->criteria->offsetUnset($key);
-        }
-
-        $this->criteria->push($criteria);
+        // TODO do we need to do anything with existing criteria?
+        $this->criteria[]= $criteria;
         return $this;
     }
 
+    public function getCriteria()
+    {
+        return $this->criteria;
+    }
 }

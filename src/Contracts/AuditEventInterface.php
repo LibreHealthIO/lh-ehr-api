@@ -2,7 +2,7 @@
 
 namespace LibreEHR\Core\Contracts;
 
-interface AuditEventInterface extends BaseInterface
+interface AuditEventInterface extends ModelInterface
 {
     public function getEventJson();
     public function setEventJson( $eventJson );

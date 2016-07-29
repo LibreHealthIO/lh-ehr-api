@@ -7,6 +7,8 @@
  */
 namespace LibreEHR\Core\Emr\Criteria;
 
+use LibreEHR\Core\Contracts\BaseInterface;
+use LibreEHR\Core\Contracts\ModelInterface;
 use LibreEHR\Core\Contracts\RepositoryInterface;
 
 abstract class AbstractCriteria
@@ -20,7 +22,5 @@ abstract class AbstractCriteria
         }
     }
 
-    public abstract function apply( ModelInterface $model, RepositoryInterface $repository );
-
-    public abstract function execute();
+    public abstract function apply( ModelInterface $model );
 }

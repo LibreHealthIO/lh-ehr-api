@@ -7,20 +7,19 @@
  */
 namespace LibreEHR\Core\Emr\Criteria;
 
-use LibreEHR\Core\Emr\Eloquent\Document;
+use LibreEHR\Core\Contracts\CriteriaInterface;
+use LibreEHR\Core\Contracts\ModelInterface;
 
-class DocumentByPid extends AbstractCriteria
+class DocumentByPid extends AbstractCriteria implements CriteriaInterface
 {
-    public function execute()
+    public function __construct( $pid, $categoryId )
     {
-        $documents = null;
-        try {
-            $documents = Document::where( 'foreign_id', $this->pid )->get();
-            return $documents;
-        } catch ( ErrorException $e ) {
-            //Do stuff if it doesn't exist.
-        }
+        parent::__construct( array( 'pid' => $pid ) );
+    }
 
-        return $documents;
+    public function apply( ModelInterface $model )
+    {
+        $model->where( 'foreign_id', $this->pid );
+        return $model;
     }
 }

@@ -6,27 +6,32 @@
  * Time: 9:44 AM
  */
 
-namespace LibreEHR\Core\Emr\Repository;
+namespace LibreEHR\Core\Emr\Repositories;
 
 use LibreEHR\Core\Contracts\DocumentRepositoryInterface;
 use Illuminate\Support\Facades\DB;
-use LibreEHR\Core\Contracts\PatientFinderInterface;
 use LibreEHR\Core\Contracts\PatientInterface;
 use LibreEHR\Core\Contracts\PatientRepositoryInterface;
 use Illuminate\Support\Facades\App;
 use LibreEHR\Core\Emr\Criteria\DocumentByPid;
 use LibreEHR\Core\Emr\Eloquent\PatientData as Patient;
+use LibreEHR\Core\Emr\Finders\Finder;
 
 class PatientRepository extends AbstractRepository implements PatientRepositoryInterface
 {
-    public function __construct( PatientFinderInterface $finder )
+    public function model()
     {
-        $this->finder = $finder;
+        return '\LibreEHR\Core\Contracts\PatientInterface';
+    }
+
+    public function find()
+    {
+        return parent::find();
     }
 
     public function create( PatientInterface $patientInterface )
     {
-        if ( is_a( $patientInterface, '\LibreEHR\Core\Emr\Eloquent\PatientData' ) ) {
+        if ( is_a( $patientInterface, $this->model() ) ) {
             $photo = $patientInterface->getPhoto();
 
             if ( !$patientInterface->getId() ) {
@@ -69,8 +74,8 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
 
     public function onAfterFind( $entity )
     {
-        $documentRepository = new DocumentRepository();
-        $documents = $documentRepository->find( new DocumentByPid( array( 'pid' => $entity->getPid(), 'category' => '10' ) ) );
+        $documentRepository = new DocumentRepository( new Finder() );
+        $documents = $documentRepository->finder()->pushCriteria( new DocumentByPid( $entity->getPid(), '10'  ) );
         $photo = null;
         foreach ( $documents as $d ) {
             foreach ( $d->categories as $category ) {

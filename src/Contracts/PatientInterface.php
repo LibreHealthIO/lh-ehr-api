@@ -2,7 +2,7 @@
 
 namespace LibreEHR\Core\Contracts;
 
-interface PatientInterface extends BaseInterface
+interface PatientInterface extends ModelInterface
 {
     public function getPid();
     public function setPid( $pid );
