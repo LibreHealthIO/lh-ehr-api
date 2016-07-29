@@ -6,7 +6,7 @@
  * Time: 9:44 AM
  */
 
-namespace LibreEHR\Core\Emr\Repository;
+namespace LibreEHR\Core\Emr\Repositories;
 
 use LibreEHR\Core\Contracts\AuditEventInterface;
 use LibreEHR\Core\Contracts\AuditEventRepositoryInterface;
@@ -16,12 +16,7 @@ class AuditEventRepository implements AuditEventRepositoryInterface
 
     public function model()
     {
-        return '\LibreEHR\Core\Emr\Eloquent\AuditEvent';
-    }
-
-    public function makeModel()
-    {
-        return App::make( '\LibreEHR\Core\Emr\Contracts\AuditEventInterface' );
+        return '\LibreEHR\Core\Contracts\AuditEventInterface';
     }
 
     public function find()

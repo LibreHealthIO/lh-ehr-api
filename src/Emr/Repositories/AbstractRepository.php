@@ -1,9 +1,11 @@
 <?php
 
-namespace LibreEHR\Core\Repository;
+namespace LibreEHR\Core\Emr\Repositories;
 
+use Illuminate\Support\Facades\App;
 use LibreEHR\Core\Contracts\FinderInterface;
 use LibreEHR\Core\Contracts\ModelInterface;
+use LibreEHR\Core\Contracts\RepositoryInterface;
 
 abstract class AbstractRepository implements RepositoryInterface
 {
@@ -37,7 +39,10 @@ abstract class AbstractRepository implements RepositoryInterface
      *
      * @return mixed
      */
-    public abstract function makeModel();
+    public function makeModel()
+    {
+        return App::make( $this->model() );
+    }
 
     /**
      * @param ModelInterface $model
@@ -46,7 +51,7 @@ abstract class AbstractRepository implements RepositoryInterface
     {
         try {
             // TODO this is leaky abstraction, depends on Eloquent, should be pushed into child class
-            $result = $model->all();
+            $result = $model->firstOrFail();
         } catch ( ErrorException $e ) {
             // TODO Do stuff if it doesn't exist.
         }
@@ -75,4 +80,6 @@ abstract class AbstractRepository implements RepositoryInterface
     {
         return $entity;
     }
+
+
 }

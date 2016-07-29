@@ -6,7 +6,7 @@
  * Time: 9:44 AM
  */
 
-namespace LibreEHR\Core\Emr\Repository;
+namespace LibreEHR\Core\Emr\Repositories;
 
 use Illuminate\Support\Facades\DB;
 use LibreEHR\Core\Contracts\DocumentRepositoryInterface;
@@ -17,12 +17,7 @@ class DocumentRepository extends AbstractRepository implements DocumentRepositor
 {
     public function model()
     {
-        return '\LibreEHR\Core\Emr\Eloquent\Document';
-    }
-
-    public function makeModel()
-    {
-        return App::make( '\LibreEHR\Core\Emr\Contracts\DocumentInterface' );
+        return '\LibreEHR\Core\Contracts\DocumentInterface';
     }
 
     public function find()
