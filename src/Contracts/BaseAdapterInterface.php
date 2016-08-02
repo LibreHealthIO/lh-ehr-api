@@ -15,5 +15,8 @@ interface BaseAdapterInterface
 {
     public function retrieve( $id );
     public function store( Request $request );
+    public function collectionToOutput();
+
+    // TODO add search method ??
 
 }
