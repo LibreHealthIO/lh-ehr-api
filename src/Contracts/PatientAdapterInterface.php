@@ -10,7 +10,7 @@ use PHPFHIRGenerated\FHIRDomainResource\FHIRPatient;
  * Take PatientInterface and output something
  *
  */
-interface PatientAdapterInterface extends BaseAdapterInterface
+interface PatientAdapterInterface
 {
     public function modelToInterface( FHIRPatient $patient );
     public function jsonToInterface( $data );
