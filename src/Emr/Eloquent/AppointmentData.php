@@ -87,6 +87,16 @@ class AppointmentData extends Model implements AppointmentInterface
         return $this;
     }
 
+    public function getServiceType()
+    {
+        return $this->pc_title;
+    }
+    public function setServiceType($serviceType)
+    {
+        $this->pc_title = $serviceType;
+        return $this;
+    }
+
     private function decodeStatus($status)
     {
         switch($status) {

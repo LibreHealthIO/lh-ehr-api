@@ -164,6 +164,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     public function getAppointmentsByParam($patientID, $data)
     {
+        $appointments = array();
         if(isset($data['date_le']) && isset($data['date_ge'])) {
             $appointments = Appointment::whereRaw('pc_pid = ? AND pc_eventDate > ? AND pc_eventDate < ?', array($patientID, $data['date_le'], $data['date_ge']))
                 ->get();
