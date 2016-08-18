@@ -162,11 +162,16 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     }
 
-    public function getAppointmentsByParam($patientID, $data)
+    public function getAppointmentsByParam($data)
     {
-        $appointments = array();
+
         if(isset($data['date_le']) && isset($data['date_ge'])) {
-            $appointments = Appointment::whereRaw('pc_pid = ? AND pc_eventDate > ? AND pc_eventDate < ?', array($patientID, $data['date_le'], $data['date_ge']))
+            $appointments = Appointment::whereRaw('pc_pid = ? AND pc_eventDate > ? AND pc_eventDate < ?', array($data['patient'], $data['date_le'], $data['date_ge']))
+                ->get();
+        } else {
+            $data_start = date('Y-m-d');
+            $data_end = date('Y-m-d', mktime(0, 0, 0, date('d')+15, 0, 0));
+            $appointments = Appointment::whereRaw('pc_pid = ? AND pc_eventDate > ? AND pc_eventDate < ?', array($data['patient'], $data_start, $data_end))
                 ->get();
         }
 
