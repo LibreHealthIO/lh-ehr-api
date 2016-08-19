@@ -39,6 +39,15 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         return $appointmentInterface;
     }
 
+    public function update($id, $status)
+    {
+        $appointmentInterface = Appointment::find($id);
+        $appointmentInterface->setPcApptStatus($status);
+        $appointmentInterface->save();
+
+        return $appointmentInterface;
+    }
+
     public function getSlots($startDate )
     {
         $busySlots = DB::table('openemr_postcalendar_events')
@@ -179,11 +188,6 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     }
 
     public function getUnavailableSlots()
-    {
-
-    }
-
-    public function update( $id, array $data )
     {
 
     }

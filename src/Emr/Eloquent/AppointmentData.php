@@ -122,7 +122,7 @@ class AppointmentData extends Model implements AppointmentInterface
                 break;
             case '%': $decodeStatus = 'Canceled &lt; 24h';
                 break;
-            default: $decodeStatus = '';
+            default: $decodeStatus = $status;
         }
 
         return $decodeStatus;
