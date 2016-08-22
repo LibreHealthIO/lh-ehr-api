@@ -58,7 +58,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             'scheduleStart' => 8,
             'scheduleEnd' => 17,
             'calendarInterval' => 15,
-            );
+        );
 
         $allSlots = $this->addFreeSlots($busySlots, $param);
         $slotFormat = $this->slotFormat($allSlots, $param);
@@ -173,18 +173,34 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     public function getAppointmentsByParam($data)
     {
+        $conditions = [];
+        $conditions[] = ['pc_pid', '=', $data['patient']];
 
-        if(isset($data['date_le']) && isset($data['date_ge'])) {
-            $appointments = Appointment::whereRaw('pc_pid = ? AND pc_eventDate > ? AND pc_eventDate < ?', array($data['patient'], $data['date_le'], $data['date_ge']))
-                ->get();
-        } else {
-            $data_start = date('Y-m-d');
-            $data_end = date('Y-m-d', mktime(0, 0, 0, date('d')+15, 0, 0));
-            $appointments = Appointment::whereRaw('pc_pid = ? AND pc_eventDate > ? AND pc_eventDate < ?', array($data['patient'], $data_start, $data_end))
-                ->get();
+        if(isset($data['date_lt'])) {
+            $conditions[] = ['pc_eventDate', '<', $data['date_lt']];
         }
-
-        return $appointments;
+        if(isset($data['date_gt'])) {
+            $conditions[] = ['pc_eventDate', '>', $data['date_gt']];
+        }
+        if(isset($data['date_eq'])) {
+            $conditions[] = ['pc_eventDate', '=', $data['date_eq']];
+        }
+        if(isset($data['date_ne'])) {
+            $conditions[] = ['pc_eventDate', '!=', $data['date_ne']];
+        }
+        if(isset($data['date_ge'])) {
+            $conditions[] = ['pc_eventDate', '>=', $data['date_ge']];
+            if ($this->getTime($data['date_ge'])){
+                $conditions[] = ['pc_startTime', '>=', $this->getTime($data['date_ge'])];
+            }
+        }
+        if(isset($data['date_le'])) {
+            $conditions[] = ['pc_eventDate', '<=', $data['date_le']];
+            if ($this->getTime($data['date_le'])){
+                $conditions[] = ['pc_startTime', '<=', $this->getTime($data['date_le'])];
+            }
+        }
+        return Appointment::where($conditions)->get();
     }
 
     public function getUnavailableSlots()
@@ -205,6 +221,14 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     public function get( $id )
     {
         return Appointment::find( $id );
+    }
+
+
+    private function getTime($string)
+    {
+        if ((strpos($string, "T")) !== false){
+            return substr($string, strpos($string, "T") + 1);
+        }
     }
 
 }
