@@ -77,6 +77,16 @@ class AppointmentData extends Model implements AppointmentInterface
         return $this;
     }
 
+    public function getDescription()
+    {
+        return $this->pc_hometext;
+    }
+    public function setDescription($description)
+    {
+        $this->pc_hometext = $description;
+        return $this;
+    }
+
     public function getPcTime()
     {
         return $this->pc_time;
