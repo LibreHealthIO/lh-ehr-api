@@ -33,7 +33,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     {
         if ( is_a( $appointmentInterface, $this->model() ) ) {
             $appointmentInterface->save();
-            $appointmentInterface = $this->get( $appointmentInterface->id );
+            $appointmentInterface = $this->get( $appointmentInterface->pc_eid );
         }
 
         return $appointmentInterface;
