@@ -50,7 +50,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     public function getSlots($startDate )
     {
-        $busySlots = DB::table('openemr_postcalendar_events')
+        $busySlots = DB::table('libreehr_postcalendar_events')
             ->where('pc_eventDate', '=', $startDate)
             ->get();
 
