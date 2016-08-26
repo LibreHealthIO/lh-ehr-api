@@ -94,12 +94,41 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
 
     public function update( $id, array $data )
     {
+        $patientInterface = Patient::find($id);
 
+        if (!empty($data['firstName'])) {
+            $patientInterface->setFirstName($data['firstName']);
+        }
+        if (!empty($data['lastName'])) {
+            $patientInterface->setLastName($data['lastName']);
+        }
+        if (!empty($data['DOB'])) {
+            $patientInterface->setDOB($data['DOB']);
+        }
+        if (!empty($data['gender'])) {
+            $patientInterface->setGender($data['gender']);
+        }
+        if (!empty($data['PrimaryPhone'])) {
+            $patientInterface->setPrimaryPhone($data['PrimaryPhone']);
+        }
+        if (!empty($data['allowSMS'])) {
+            $patientInterface->setAllowSMS($data['allowSMS']);
+        }
+        if (!empty($data['emailAddress'])) {
+            $patientInterface->setEmailAddress($data['emailAddress']);
+        }
+        if (!empty($data['photo'])) {
+            $patientInterface->setPhoto($data['photo']);
+        }
+
+        $patientInterface ->save();
+
+        return $patientInterface;
     }
 
     public function delete( $id )
     {
-
+        return Patient::destroy( $id );
     }
 
     public function fetchAll()
