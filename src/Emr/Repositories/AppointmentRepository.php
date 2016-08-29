@@ -176,29 +176,32 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         $conditions = [];
         $conditions[] = ['pc_pid', '=', $data['patient']];
 
-        if(isset($data['date_lt'])) {
-            $conditions[] = ['pc_eventDate', '<', $data['date_lt']];
-        }
-        if(isset($data['date_gt'])) {
-            $conditions[] = ['pc_eventDate', '>', $data['date_gt']];
-        }
-        if(isset($data['date_eq'])) {
-            $conditions[] = ['pc_eventDate', '=', $data['date_eq']];
-        }
-        if(isset($data['date_ne'])) {
-            $conditions[] = ['pc_eventDate', '!=', $data['date_ne']];
-        }
-        if(isset($data['date_ge'])) {
-            $conditions[] = ['pc_eventDate', '>=', $data['date_ge']];
-            if ($this->getTime($data['date_ge'])){
-                $conditions[] = ['pc_startTime', '>=', $this->getTime($data['date_ge'])];
+        foreach($data as $k => $ln) {
+            if (strpos($ln, 'le') !== false) {
+                $conditions[] = ['pc_eventDate', '<=', $this->getDate($ln, "lt")];
             }
-        }
-        if(isset($data['date_le'])) {
-            $conditions[] = ['pc_eventDate', '<=', $data['date_le']];
-            if ($this->getTime($data['date_le'])){
-                $conditions[] = ['pc_startTime', '<=', $this->getTime($data['date_le'])];
+            if (strpos($ln, 'ge') !== false) {
+                $conditions[] = ['pc_eventDate', '>=', $this->getDate($ln, "gt")];
             }
+            if (strpos($ln, 'eq') !== false) {
+                $conditions[] = ['pc_eventDate', '=', $this->getDate($ln, "eq")];
+            }
+            if (strpos($ln, 'ne') !== false) {
+                $conditions[] = ['pc_eventDate', '!=', $this->getDate($ln, "ne")];
+            }
+            if (strpos($ln, 'gt') !== false) {
+                $conditions[] = ['pc_eventDate', '>=', $this->getDate($ln, "gt")];
+                if ($this->getTime($ln)) {
+                    $conditions[] = ['pc_startTime', '>', $this->getTime($ln)];
+                }
+            }
+            if (strpos($ln, 'lt') !== false) {
+                $conditions[] = ['pc_eventDate', '<=', $this->getDate($ln, "lt")];
+                if ($this->getTime($ln)) {
+                    $conditions[] = ['pc_startTime', '<', $this->getTime($ln)];
+                }
+            }
+
         }
         return Appointment::where($conditions)->get();
     }
@@ -229,6 +232,14 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         if ((strpos($string, "T")) !== false){
             return substr($string, strpos($string, "T") + 1);
         }
+    }
+
+    private function getDate($ln, $param)
+    {
+        if(strpos($ln, 'T') !== false){
+            $ln = substr($ln, 0, strpos($ln, 'T'));
+        }
+        return substr($ln, strpos($ln, $param) + 2);
     }
 
 }
