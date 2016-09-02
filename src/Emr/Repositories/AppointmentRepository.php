@@ -200,7 +200,32 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                 $conditions[] = ['pc_startTime', '<=', $this->getTime($data['date_le'])];
             }
         }
-        return Appointment::where($conditions)->get();
+        $appointments = $this->processingAppointmentStatuses(Appointment::where($conditions)->get());
+
+        return $appointments;
+    }
+
+    private function processingAppointmentStatuses($appointments){
+
+        if(!$appointments) {
+
+            return $appointments;
+        }
+        $appStatuses = DB::table('list_options')
+            ->select('option_id', 'mapping')
+            ->where('list_id', 'apptstat')
+            ->get();
+        $statuses = array();
+        foreach($appStatuses as $statusesObj) {
+            $statuses[$statusesObj->option_id] = $statusesObj->mapping;
+        }
+        foreach($appointments as &$appointment) {
+
+            $appointment['pc_apptstatus'] = $statuses[$appointment['pc_apptstatus'] ];
+        }
+
+        return $appointments;
+
     }
 
     public function getUnavailableSlots()
