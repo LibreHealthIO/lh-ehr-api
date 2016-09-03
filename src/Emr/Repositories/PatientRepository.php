@@ -52,21 +52,24 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
             $patientInterface = $this->get( $patientInterface->id );
 
             // TODO use document Repository to get the path from some config
-            $docpath = "/Users/kchapple/Dev/www/openemr_github/sites/default/documents";
-            mkdir( $docpath."/".$patientInterface->getPid() );
-            $filepath = $docpath."/".$patientInterface->getPid()."/".$photo->filename;
-            $ifp = fopen( $filepath, "wb");
-            fwrite($ifp, base64_decode( $photo->base64Data ) );
-            fclose($ifp);
 
-            $documentRepo = App::make( 'LibreEHR\Core\Contracts\DocumentRepositoryInterface' );
-            $photo->setType( 'file_url' );
-            $photo->setUrl( "file://$filepath" );
-            $photo->setDate( date('Y-m-d') );
-            $photo->setForeignId( $patientInterface->getPid() );
-            $photo->addCategory( 10 ); // 10 === 'Patient Photograph'
+            if(!empty($photo)) {
+                $docpath = "/Users/kchapple/Dev/www/openemr_github/sites/default/documents";
+                mkdir($docpath . "/" . $patientInterface->getPid());
+                $filepath = $docpath . "/" . $patientInterface->getPid() . "/" . $photo->filename;
+                $ifp = fopen($filepath, "wb");
+                fwrite($ifp, base64_decode($photo->base64Data));
+                fclose($ifp);
 
-            $documentRepo->create( $photo );
+                $documentRepo = App::make('LibreEHR\Core\Contracts\DocumentRepositoryInterface');
+                $photo->setType('file_url');
+                $photo->setUrl("file://$filepath");
+                $photo->setDate(date('Y-m-d'));
+                $photo->setForeignId($patientInterface->getPid());
+                $photo->addCategory(10); // 10 === 'Patient Photograph'
+
+                $documentRepo->create($photo);
+            }
         }
 
         return $patientInterface;
