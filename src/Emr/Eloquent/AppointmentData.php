@@ -107,6 +107,16 @@ class AppointmentData extends Model implements AppointmentInterface
         return $this;
     }
 
+    public function getLocation()
+    {
+        return $this->pc_location;
+    }
+    public function setLocation($location)
+    {
+        $this->pc_location = $location;
+        return $this;
+    }
+
     private function decodeStatus($status)
     {
         switch($status) {
