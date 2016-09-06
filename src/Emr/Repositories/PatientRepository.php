@@ -52,21 +52,24 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
             $patientInterface = $this->get( $patientInterface->id );
 
             // TODO use document Repository to get the path from some config
-            $docpath = "/Users/kchapple/Dev/www/openemr_github/sites/default/documents";
-            mkdir( $docpath."/".$patientInterface->getPid() );
-            $filepath = $docpath."/".$patientInterface->getPid()."/".$photo->filename;
-            $ifp = fopen( $filepath, "wb");
-            fwrite($ifp, base64_decode( $photo->base64Data ) );
-            fclose($ifp);
 
-            $documentRepo = App::make( 'LibreEHR\Core\Contracts\DocumentRepositoryInterface' );
-            $photo->setType( 'file_url' );
-            $photo->setUrl( "file://$filepath" );
-            $photo->setDate( date('Y-m-d') );
-            $photo->setForeignId( $patientInterface->getPid() );
-            $photo->addCategory( 10 ); // 10 === 'Patient Photograph'
+            if(!empty($photo)) {
+                $docpath = "/Users/kchapple/Dev/www/openemr_github/sites/default/documents";
+                mkdir($docpath . "/" . $patientInterface->getPid());
+                $filepath = $docpath . "/" . $patientInterface->getPid() . "/" . $photo->filename;
+                $ifp = fopen($filepath, "wb");
+                fwrite($ifp, base64_decode($photo->base64Data));
+                fclose($ifp);
 
-            $documentRepo->create( $photo );
+                $documentRepo = App::make('LibreEHR\Core\Contracts\DocumentRepositoryInterface');
+                $photo->setType('file_url');
+                $photo->setUrl("file://$filepath");
+                $photo->setDate(date('Y-m-d'));
+                $photo->setForeignId($patientInterface->getPid());
+                $photo->addCategory(10); // 10 === 'Patient Photograph'
+
+                $documentRepo->create($photo);
+            }
         }
 
         return $patientInterface;
@@ -91,12 +94,41 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
 
     public function update( $id, array $data )
     {
+        $patientInterface = Patient::find($id);
 
+        if (!empty($data['firstName'])) {
+            $patientInterface->setFirstName($data['firstName']);
+        }
+        if (!empty($data['lastName'])) {
+            $patientInterface->setLastName($data['lastName']);
+        }
+        if (!empty($data['DOB'])) {
+            $patientInterface->setDOB($data['DOB']);
+        }
+        if (!empty($data['gender'])) {
+            $patientInterface->setGender($data['gender']);
+        }
+        if (!empty($data['PrimaryPhone'])) {
+            $patientInterface->setPrimaryPhone($data['PrimaryPhone']);
+        }
+        if (!empty($data['allowSMS'])) {
+            $patientInterface->setAllowSMS($data['allowSMS']);
+        }
+        if (!empty($data['emailAddress'])) {
+            $patientInterface->setEmailAddress($data['emailAddress']);
+        }
+        if (!empty($data['photo'])) {
+            $patientInterface->setPhoto($data['photo']);
+        }
+
+        $patientInterface ->save();
+
+        return $patientInterface;
     }
 
     public function delete( $id )
     {
-
+        return Patient::destroy( $id );
     }
 
     public function fetchAll()
