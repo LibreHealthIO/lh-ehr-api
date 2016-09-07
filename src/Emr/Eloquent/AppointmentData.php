@@ -3,6 +3,7 @@
 namespace LibreEHR\Core\Emr\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use LibreEHR\Core\Contracts\AppointmentInterface;
 
 class AppointmentData extends Model implements AppointmentInterface
@@ -10,6 +11,8 @@ class AppointmentData extends Model implements AppointmentInterface
     protected $table = 'libreehr_postcalendar_events';
 
     protected $primaryKey = 'pc_eid';
+
+    protected $listId = 'apptstat';
 
     public $timestamps = false;
 
@@ -63,7 +66,7 @@ class AppointmentData extends Model implements AppointmentInterface
     }
     public function setPcApptStatus($pcApptstatus)
     {
-        $this->pc_apptstatus = $pcApptstatus;
+        $this->pc_apptstatus = $this->encodeStatus($pcApptstatus);
         return $this;
     }
 
@@ -119,32 +122,19 @@ class AppointmentData extends Model implements AppointmentInterface
 
     private function decodeStatus($status)
     {
-        switch($status) {
-            case '+': $decodeStatus = 'Chart pulled';
-                break;
-            case 'x': $decodeStatus = 'Canceled';
-                break;
-            case '?': $decodeStatus = 'No show';
-                break;
-            case '@': $decodeStatus = 'Arrived';
-                break;
-            case '~': $decodeStatus = 'Arrived late';
-                break;
-            case '!': $decodeStatus = 'Left w/o visit';
-                break;
-            case '#': $decodeStatus = 'Ins/fin issue';
-                break;
-            case '<': $decodeStatus = 'In exam room';
-                break;
-            case '>': $decodeStatus = 'Checked out';
-                break;
-            case '$': $decodeStatus = 'Coding done';
-                break;
-            case '%': $decodeStatus = 'Canceled &lt; 24h';
-                break;
-            default: $decodeStatus = $status;
-        }
+        $conditions= [
+            0 => ['option_id', 'like', $status],
+            1 => ['list_id', 'like', $this->listId]
+        ];
+        return DB::table('list_options')->where($conditions)->value('mapping');
+    }
 
-        return $decodeStatus;
+    private function encodeStatus($status)
+    {
+        $conditions= [
+            0 => ['mapping', 'like', $status],
+            1 => ['list_id', 'like', $this->listId]
+        ];
+        return DB::table('list_options')->where($conditions)->value('option_id');
     }
 }
