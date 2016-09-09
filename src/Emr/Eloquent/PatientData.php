@@ -7,6 +7,8 @@ use LibreEHR\Core\Contracts\PatientInterface;
 
 class PatientData extends Model implements PatientInterface
 {
+    protected $connection = 'mysql';
+    
     protected $table = 'patient_data';
 
     protected $primaryKey = 'id';

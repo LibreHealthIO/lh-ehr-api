@@ -7,6 +7,8 @@ use LibreEHR\Core\Contracts\AppointmentInterface;
 
 class AppointmentData extends Model implements AppointmentInterface
 {
+    protected $connection = 'mysql';
+    
     protected $table = 'libreehr_postcalendar_events';
 
     protected $primaryKey = 'pc_eid';
