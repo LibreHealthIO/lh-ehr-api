@@ -29,11 +29,11 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         return parent::find();
     }
 
-    public function create( AppointmentInterface $appointmentInterface )
+    public function create(AppointmentInterface $appointmentInterface)
     {
-        if ( is_a( $appointmentInterface, $this->model() ) ) {
+        if (is_a($appointmentInterface, $this->model())) {
             $appointmentInterface->save();
-            $appointmentInterface = $this->get( $appointmentInterface->pc_eid );
+            $appointmentInterface = $this->get($appointmentInterface->pc_eid);
         }
 
         return $appointmentInterface;
@@ -48,9 +48,9 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         return $appointmentInterface;
     }
 
-    public function getSlots($startDate )
+    public function getSlots($startDate)
     {
-        $busySlots = DB::table('libreehr_postcalendar_events')
+        $busySlots = DB::connection('mysql')->table('libreehr_postcalendar_events')
             ->where('pc_eventDate', '=', $startDate)
             ->get();
 
@@ -85,7 +85,8 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     {
         if($busy_slots) {
             $i = 0;
-            foreach($busy_slots as $slot) {
+            $busyInterval = [];
+            foreach ($busy_slots as $slot) {
                 $busyInterval[$i]['startTime'] = $slot->pc_startTime;
                 $busyInterval[$i]['endTime'] = $slot->pc_endTime;
                 $i++;
@@ -119,32 +120,32 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                     }
                 }
 
-                foreach($minute as $m ){
+                foreach ($minute as $m ) {
                     array_push($allSlots, array("hour"=>$blockNum, "minute"=>$m, "status" => "free"));
                 }
             }
 
             foreach ($allSlots as $key => $slot) {
 
-                foreach($busyInterval as $busy) {
-                    $arStart = explode(':',$busy['startTime']);
-                    if($arStart[0] < $scheduleStart){
+                foreach ($busyInterval as $busy) {
+                    $arStart = explode(':', $busy['startTime']);
+                    if ($arStart[0] < $scheduleStart) {
                         $arStart[0] = (int)$arStart[0] + 12;
                     }
-                    if($slot['hour'] != $arStart[0]){
+                    if ($slot['hour'] != $arStart[0]) {
                         continue;
                     }
-                    if($slot['minute'] != $arStart[1]){
+                    if ($slot['minute'] != $arStart[1]) {
                         continue;
                     }
-                    $arEnd = explode(':',$busy['endTime']);
-                    if($arEnd[0] < $scheduleStart){
+                    $arEnd = explode(':', $busy['endTime']);
+                    if ($arEnd[0] < $scheduleStart) {
                         $arEnd[0] = (int)$arEnd[0] + 12;
                     }
 
                     $busyKey = $this->busySlotKey($allSlots, $key, $arEnd);
 
-                    foreach ($busyKey as $key){
+                    foreach ($busyKey as $key) {
                         $allSlots[$key]['status'] = 'busy';
                     }
                 }

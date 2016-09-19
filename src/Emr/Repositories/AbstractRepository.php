@@ -13,18 +13,25 @@ abstract class AbstractRepository implements RepositoryInterface
      * @var FinderInterface
      */
     protected $finder;
+    protected $databaseKey;
 
     /**
      * @param FinderInterface $finder
      */
-    public function __construct( FinderInterface $finder )
+    public function __construct( FinderInterface $finder, $databaseKey = null )
     {
         $this->finder = $finder;
+        $this->databaseKey = $databaseKey;
     }
 
     public function finder()
     {
         return $this->finder;
+    }
+
+    public function setDatabaseKey( $databaseKey )
+    {
+        $this->databaseKey = $databaseKey;
     }
 
     /**
@@ -51,6 +58,7 @@ abstract class AbstractRepository implements RepositoryInterface
     {
         try {
             // TODO this is leaky abstraction, depends on Eloquent, should be pushed into child class
+            $model->setConnection( $this->databaseKey );
             $result = $model->firstOrFail();
         } catch ( ErrorException $e ) {
             // TODO Do stuff if it doesn't exist.

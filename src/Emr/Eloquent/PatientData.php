@@ -2,7 +2,7 @@
 
 namespace LibreEHR\Core\Emr\Eloquent;
 
-use Illuminate\Database\Eloquent\Model;
+use LibreEHR\Core\Emr\Eloquent\AbstractModel as Model;
 use LibreEHR\Core\Contracts\PatientInterface;
 
 class PatientData extends Model implements PatientInterface
@@ -25,7 +25,6 @@ class PatientData extends Model implements PatientInterface
         $this->pid = $pid;
         return $this;
     }
-
 
     public function getId()
     {

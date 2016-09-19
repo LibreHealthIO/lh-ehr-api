@@ -2,7 +2,7 @@
 
 namespace LibreEHR\Core\Emr\Eloquent;
 
-use Illuminate\Database\Eloquent\Model;
+use LibreEHR\Core\Emr\Eloquent\AbstractModel as Model;
 
 class Category extends Model
 {
