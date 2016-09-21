@@ -19,6 +19,9 @@ use LibreEHR\Core\Emr\Finders\Finder;
 
 class AppointmentRepository extends AbstractRepository implements AppointmentRepositoryInterface
 {
+
+    const CHECK_PARAM = 'T';
+
     public function model()
     {
         return '\LibreEHR\Core\Contracts\AppointmentInterface';
@@ -29,11 +32,11 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         return parent::find();
     }
 
-    public function create( AppointmentInterface $appointmentInterface )
+    public function create(AppointmentInterface $appointmentInterface)
     {
-        if ( is_a( $appointmentInterface, $this->model() ) ) {
+        if (is_a($appointmentInterface, $this->model())) {
             $appointmentInterface->save();
-            $appointmentInterface = $this->get( $appointmentInterface->pc_eid );
+            $appointmentInterface = $this->get($appointmentInterface->pc_eid);
         }
 
         return $appointmentInterface;
@@ -48,7 +51,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         return $appointmentInterface;
     }
 
-    public function getSlots($startDate )
+    public function getSlots($startDate)
     {
         $busySlots = DB::table('libreehr_postcalendar_events')
             ->where('pc_eventDate', '=', $startDate)
@@ -68,24 +71,20 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     private function slotFormat($allSlots, $param)
     {
-
         $slotFormat = array();
         foreach ($allSlots as $key => $slot) {
-
             $slotFormat[$key]['startTime'] = date("H:i:s", mktime($slot['hour'], $slot['minute'], 0, 0, 0, 0));
             $slotFormat[$key]['endTime'] = date("H:i:s", mktime($slot['hour'], $slot['minute'] + $param['calendarInterval'], 0, 0, 0, 0));
             $slotFormat[$key]['status'] = $slot['status'];
         }
         return $slotFormat;
-
     }
-
 
     public function addFreeSlots($busy_slots, $param)
     {
-        if($busy_slots) {
+        if ($busy_slots) {
             $i = 0;
-            foreach($busy_slots as $slot) {
+            foreach ($busy_slots as $slot) {
                 $busyInterval[$i]['startTime'] = $slot->pc_startTime;
                 $busyInterval[$i]['endTime'] = $slot->pc_endTime;
                 $i++;
@@ -101,50 +100,46 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
             // For each hour in the schedule...
             //
-            for($blockNum = $scheduleStart; $blockNum <= $scheduleEnd; $blockNum++){
-
+            for ($blockNum = $scheduleStart; $blockNum <= $scheduleEnd; $blockNum++) {
                 // $minute is an array of time slot strings within this hour.
                 $minute = array('00');
 
-                for($minutes = $calendarInterval; $minutes <= 60; $minutes += $calendarInterval) {
-                    if($minutes <= '9'){
+                for ($minutes = $calendarInterval; $minutes <= 60; $minutes += $calendarInterval) {
+                    if ($minutes <= '9') {
                         $under_ten = "0" . $minutes;
                         array_push($minute, "$under_ten");
-                    }
-                    else if($minutes >= '60') {
+                    } elseif ($minutes >= '60') {
                         break;
-                    }
-                    else {
+                    } else {
                         array_push($minute, "$minutes");
                     }
                 }
 
-                foreach($minute as $m ){
+                foreach ($minute as $m) {
                     array_push($allSlots, array("hour"=>$blockNum, "minute"=>$m, "status" => "free"));
                 }
             }
 
             foreach ($allSlots as $key => $slot) {
-
-                foreach($busyInterval as $busy) {
-                    $arStart = explode(':',$busy['startTime']);
-                    if($arStart[0] < $scheduleStart){
+                foreach ($busyInterval as $busy) {
+                    $arStart = explode(':', $busy['startTime']);
+                    if ($arStart[0] < $scheduleStart) {
                         $arStart[0] = (int)$arStart[0] + 12;
                     }
-                    if($slot['hour'] != $arStart[0]){
+                    if ($slot['hour'] != $arStart[0]) {
                         continue;
                     }
-                    if($slot['minute'] != $arStart[1]){
+                    if ($slot['minute'] != $arStart[1]) {
                         continue;
                     }
-                    $arEnd = explode(':',$busy['endTime']);
-                    if($arEnd[0] < $scheduleStart){
+                    $arEnd = explode(':', $busy['endTime']);
+                    if ($arEnd[0] < $scheduleStart) {
                         $arEnd[0] = (int)$arEnd[0] + 12;
                     }
 
                     $busyKey = $this->busySlotKey($allSlots, $key, $arEnd);
 
-                    foreach ($busyKey as $key){
+                    foreach ($busyKey as $key) {
                         $allSlots[$key]['status'] = 'busy';
                     }
                 }
@@ -159,16 +154,15 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
         $busyKey = array();
         for ($i = $keyStart; $i <= count($allSlots); $i++) {
-            if($allSlots[$i]['hour'] > $endTime[0]) {
+            if ($allSlots[$i]['hour'] > $endTime[0]) {
                 break;
             }
-            if($allSlots[$i]['hour'] == $endTime[0] && $allSlots[$i]['minute'] >= $endTime[1]) {
+            if ($allSlots[$i]['hour'] == $endTime[0] && $allSlots[$i]['minute'] >= $endTime[1]) {
                 break;
             }
             $allSlots[$i]['status'] = 'busy';
         }
         return $busyKey;
-
     }
 
     public function getAppointmentsByParam($data)
@@ -176,27 +170,27 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         $conditions = [];
         $conditions[] = ['pc_pid', '=', $data['patient']];
 
-        if(isset($data['date_lt'])) {
+        if (isset($data['date_lt'])) {
             $conditions[] = ['pc_eventDate', '<', $data['date_lt']];
         }
-        if(isset($data['date_gt'])) {
+        if (isset($data['date_gt'])) {
             $conditions[] = ['pc_eventDate', '>', $data['date_gt']];
         }
-        if(isset($data['date_eq'])) {
+        if (isset($data['date_eq'])) {
             $conditions[] = ['pc_eventDate', '=', $data['date_eq']];
         }
-        if(isset($data['date_ne'])) {
+        if (isset($data['date_ne'])) {
             $conditions[] = ['pc_eventDate', '!=', $data['date_ne']];
         }
-        if(isset($data['date_ge'])) {
+        if (isset($data['date_ge'])) {
             $conditions[] = ['pc_eventDate', '>=', $data['date_ge']];
-            if ($this->getTime($data['date_ge'])){
+            if ($this->getTime($data['date_ge'])) {
                 $conditions[] = ['pc_startTime', '>=', $this->getTime($data['date_ge'])];
             }
         }
-        if(isset($data['date_le'])) {
+        if (isset($data['date_le'])) {
             $conditions[] = ['pc_eventDate', '<=', $data['date_le']];
-            if ($this->getTime($data['date_le'])){
+            if ($this->getTime($data['date_le'])) {
                 $conditions[] = ['pc_startTime', '<=', $this->getTime($data['date_le'])];
             }
         }
@@ -205,12 +199,10 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     public function getUnavailableSlots()
     {
-
     }
 
-    public function delete( $id )
+    public function delete($id)
     {
-
     }
 
     public function fetchAll()
@@ -218,16 +210,16 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         return Appointment::all();
     }
 
-    public function get( $id )
+    public function get($id)
     {
-        return Appointment::find( $id );
+        return Appointment::find($id);
     }
 
 
     private function getTime($string)
     {
-        if ((strpos($string, "T")) !== false){
-            return substr($string, strpos($string, "T") + 1);
+        if ((strpos($string, AppointmentRepository::CHECK_PARAM)) !== false) {
+            return substr($string, strpos($string, AppointmentRepository::CHECK_PARAM) + 1);
         }
     }
 

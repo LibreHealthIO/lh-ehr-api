@@ -18,7 +18,7 @@ class AbstractFinder
      * @param CriteriaInterface $criteria
      * @return $this
      */
-    public function pushCriteria( CriteriaInterface $criteria )
+    public function pushCriteria(CriteriaInterface $criteria)
     {
         // TODO do we need to do anything with existing criteria?
         $this->criteria[]= $criteria;

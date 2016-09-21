@@ -4,5 +4,5 @@ namespace LibreEHR\Core\Contracts;
 
 interface AuditEventRepositoryInterface extends RepositoryInterface
 {
-    public function create( AuditEventInterface $auditEventInterface );
+    public function create(AuditEventInterface $auditEventInterface);
 }

@@ -1,6 +1,7 @@
 <?php
 
 namespace LibreEHR\Core\Contracts;
+
 use Illuminate\Http\Request;
 
 /**
@@ -13,10 +14,9 @@ use Illuminate\Http\Request;
  */
 interface BaseAdapterInterface
 {
-    public function retrieve( $id );
-    public function store( Request $request );
+    public function retrieve($id);
+    public function store(Request $request);
     public function collectionToOutput();
 
     // TODO add search method ??
-
 }

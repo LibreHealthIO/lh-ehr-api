@@ -1,6 +1,7 @@
 <?php
 
 namespace LibreEHR\Core\Contracts;
+
 use PHPFHIRGenerated\FHIRDomainResource\FHIRPatient;
 
 /**
@@ -12,8 +13,8 @@ use PHPFHIRGenerated\FHIRDomainResource\FHIRPatient;
  */
 interface PatientAdapterInterface
 {
-    public function modelToInterface( FHIRPatient $patient );
-    public function jsonToInterface( $data );
-    public function storeInterface( PatientInterface $interface );
-    public function interfaceToModel( PatientInterface $interface );
+    public function modelToInterface(FHIRPatient $patient);
+    public function jsonToInterface($data);
+    public function storeInterface(PatientInterface $interface);
+    public function interfaceToModel(PatientInterface $interface);
 }

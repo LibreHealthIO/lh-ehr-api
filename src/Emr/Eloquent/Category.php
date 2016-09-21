@@ -12,6 +12,11 @@ class Category extends Model
 
     public function documents()
     {
-        return $this->belongsToMany( 'LibreEHR\Core\Emr\Eloquent\Document', 'categories_to_documents', 'category_id', 'document_id' );
+        return $this->belongsToMany(
+            'LibreEHR\Core\Emr\Eloquent\Document',
+            'categories_to_documents',
+            'category_id',
+            'document_id'
+        );
     }
 }

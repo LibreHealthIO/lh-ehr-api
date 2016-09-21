@@ -12,8 +12,8 @@ use PHPFHIRGenerated\FHIRDomainResource\FHIRAuditEvent;
  */
 interface AuditEventAdapterInterface extends BaseAdapterInterface
 {
-    public function modelToInterface( FHIRAuditEvent $patient );
-    public function jsonToInterface( $data );
-    public function storeInterface( AuditEventInterface $interface );
-    public function interfaceToModel( AuditEventInterface $interface );
+    public function modelToInterface(FHIRAuditEvent $patient);
+    public function jsonToInterface($data);
+    public function storeInterface(AuditEventInterface $interface);
+    public function interfaceToModel(AuditEventInterface $interface);
 }

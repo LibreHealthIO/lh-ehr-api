@@ -17,7 +17,7 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * @param FinderInterface $finder
      */
-    public function __construct( FinderInterface $finder )
+    public function __construct(FinderInterface $finder)
     {
         $this->finder = $finder;
     }
@@ -32,7 +32,7 @@ abstract class AbstractRepository implements RepositoryInterface
      *
      * @return mixed
      */
-    public abstract function model();
+    abstract public function model();
 
     /**
      * Get instance of model
@@ -41,18 +41,18 @@ abstract class AbstractRepository implements RepositoryInterface
      */
     public function makeModel()
     {
-        return App::make( $this->model() );
+        return App::make($this->model());
     }
 
     /**
      * @param ModelInterface $model
      */
-    public function execute( ModelInterface $model )
+    public function execute(ModelInterface $model)
     {
         try {
             // TODO this is leaky abstraction, depends on Eloquent, should be pushed into child class
             $result = $model->firstOrFail();
-        } catch ( ErrorException $e ) {
+        } catch (ErrorException $e) {
             // TODO Do stuff if it doesn't exist.
         }
 
@@ -68,18 +68,14 @@ abstract class AbstractRepository implements RepositoryInterface
     public function find()
     {
         $model = $this->makeModel();
-        foreach ( $this->finder->getCriteria() as $criteria ) {
-            $model = $criteria->apply( $model );
+        foreach ($this->finder->getCriteria() as $criteria) {
+            $model = $criteria->apply($model);
         }
-        $entity = $this->execute( $model );
-        $entity = $this->onAfterFind( $entity );
-        return $entity;
+        return $this->onAfterFind($this->execute($model));
     }
 
-    public function onAfterFind( $entity )
+    public function onAfterFind($entity)
     {
         return $entity;
     }
-
-
 }

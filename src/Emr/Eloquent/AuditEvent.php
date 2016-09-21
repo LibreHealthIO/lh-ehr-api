@@ -14,7 +14,7 @@ class AuditEvent extends Model implements AuditEventInterface
         return $this->id;
     }
 
-    public function setId( $id )
+    public function setId($id)
     {
         $this->id = $id;
         return $this;
@@ -25,7 +25,7 @@ class AuditEvent extends Model implements AuditEventInterface
         return $this->event_json;
     }
 
-    public function setEventJson( $eventJson )
+    public function setEventJson($eventJson)
     {
         $this->event_json = $eventJson;
         return $this;
@@ -36,7 +36,7 @@ class AuditEvent extends Model implements AuditEventInterface
         return $this->username;
     }
 
-    public function setUsername( $username )
+    public function setUsername($username)
     {
         $this->username = $username;
     }

@@ -6,5 +6,5 @@ use LibreEHR\Core\Emr\Criteria\AbstractCriteria;
 
 interface DocumentRepositoryInterface extends RepositoryInterface
 {
-    public function create( DocumentInterface $documentInterface );
+    public function create(DocumentInterface $documentInterface);
 }

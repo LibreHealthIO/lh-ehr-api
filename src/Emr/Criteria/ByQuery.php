@@ -12,10 +12,10 @@ use LibreEHR\Core\Emr\Eloquent\PatientData as Patient;
 
 class ByQuery extends AbstractCriteria
 {
-    protected  $sql = null;
+    protected $sql = null;
     protected $bindings = null;
 
-    public function __construct( $sql, array $bindings = null )
+    public function __construct($sql, array $bindings = null)
     {
         $this->sql = $sql;
         $this->bindings = $bindings;
@@ -25,9 +25,9 @@ class ByQuery extends AbstractCriteria
     {
         $patient = null;
         try {
-            $patient = Patient::where( 'pid', $this->pid )->firstOrFail();
+            $patient = Patient::where('pid', $this->pid)->firstOrFail();
             return $patient;
-        } catch ( ErrorException $e ) {
+        } catch (ErrorException $e) {
             //Do stuff if it doesn't exist.
         }
 

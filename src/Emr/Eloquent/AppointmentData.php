@@ -24,7 +24,7 @@ class AppointmentData extends Model implements AppointmentInterface
         return $this->pc_eid;
     }
 
-    public function setId( $id )
+    public function setId($id)
     {
         $this->pc_eid = $id;
         return $this;
@@ -35,7 +35,7 @@ class AppointmentData extends Model implements AppointmentInterface
         return $this->getPcEventDate() . ' ' . $this->pc_startTime;
     }
 
-    public function setStartTime( $startTime )
+    public function setStartTime($startTime)
     {
         $this->pc_startTime = $startTime;
         return $this;
@@ -46,7 +46,7 @@ class AppointmentData extends Model implements AppointmentInterface
         return $this->getPcEventDate() . ' ' . $this->pc_endTime;
     }
 
-    public function setEndTime( $endTime )
+    public function setEndTime($endTime)
     {
         $this->pc_endTime = $endTime;
         return $this;

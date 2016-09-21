@@ -12,14 +12,14 @@ use LibreEHR\Core\Contracts\ModelInterface;
 
 class DocumentByPid extends AbstractCriteria implements CriteriaInterface
 {
-    public function __construct( $pid, $categoryId )
+    public function __construct($pid, $categoryId)
     {
-        parent::__construct( array( 'pid' => $pid ) );
+        parent::__construct(array('pid' => $pid));
     }
 
-    public function apply( ModelInterface $model )
+    public function apply(ModelInterface $model)
     {
-        $model->where( 'foreign_id', $this->pid );
+        $model->where('foreign_id', $this->pid);
         return $model;
     }
 }

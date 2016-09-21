@@ -13,14 +13,14 @@ use LibreEHR\Core\Contracts\RepositoryInterface;
 
 abstract class AbstractCriteria
 {
-    public function __construct( $args )
+    public function __construct($args)
     {
-        if ( is_array( $args ) ) {
-            foreach ( $args as $key => $value ) {
+        if (is_array($args)) {
+            foreach ($args as $key => $value) {
                 $this->{$key} = $value;
             }
         }
     }
 
-    public abstract function apply( ModelInterface $model );
+    abstract public function apply(ModelInterface $model);
 }

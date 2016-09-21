@@ -15,14 +15,14 @@ class PatientData extends Model implements PatientInterface
 
     public $timestamps = false;
 
-    protected  $photo = null;
+    protected $photo = null;
 
     public function getPid()
     {
         return $this->pid;
     }
 
-    public function setPid( $pid )
+    public function setPid($pid)
     {
         $this->pid = $pid;
         return $this;
@@ -34,7 +34,7 @@ class PatientData extends Model implements PatientInterface
         return $this->id;
     }
 
-    public function setId( $id )
+    public function setId($id)
     {
         $this->id = $id;
         return $this;
@@ -45,7 +45,7 @@ class PatientData extends Model implements PatientInterface
         return $this->fname;
     }
 
-    public function setFirstName( $firstName )
+    public function setFirstName($firstName)
     {
         $this->fname = $firstName;
         return $this;
@@ -56,7 +56,7 @@ class PatientData extends Model implements PatientInterface
         return $this->lname;
     }
 
-    public function setLastName( $lastName )
+    public function setLastName($lastName)
     {
         $this->lname = $lastName;
         return $this;
@@ -67,7 +67,7 @@ class PatientData extends Model implements PatientInterface
         return $this->DOB;
     }
 
-    public function setDOB( $DOB )
+    public function setDOB($DOB)
     {
         $this->DOB = $DOB;
         return $this;
@@ -78,7 +78,7 @@ class PatientData extends Model implements PatientInterface
         return $this->sex;
     }
 
-    public function setGender( $gender )
+    public function setGender($gender)
     {
         $this->sex = $gender;
         return $this;
@@ -89,7 +89,7 @@ class PatientData extends Model implements PatientInterface
         return $this->phone_home;
     }
 
-    public function setPrimaryPhone( $phone )
+    public function setPrimaryPhone($phone)
     {
         $this->phone_home = $phone;
         return $this;
@@ -100,7 +100,7 @@ class PatientData extends Model implements PatientInterface
         return $this->hippa_allowsms;
     }
 
-    public function setAllowSms( $allowSms )
+    public function setAllowSms($allowSms)
     {
         $this->hipaa_allowsms = $allowSms;
         return $this;
@@ -111,7 +111,7 @@ class PatientData extends Model implements PatientInterface
         return $this->email;
     }
 
-    public function setEmailAddress( $emailAddress )
+    public function setEmailAddress($emailAddress)
     {
         $this->email = $emailAddress;
         return $this;
@@ -122,7 +122,7 @@ class PatientData extends Model implements PatientInterface
         return $this->photo;
     }
 
-    public function setPhoto( $photo )
+    public function setPhoto($photo)
     {
         $this->photo = $photo;
         return $this;

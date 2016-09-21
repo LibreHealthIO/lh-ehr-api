@@ -12,6 +12,5 @@ class RowValue extends AbstractCriteria
 {
     public function execute()
     {
-
     }
 }

@@ -11,29 +11,29 @@ class PatientRepositoryTest extends TestCase
 
     public function tearDown()
     {
-
     }
 
     public function testCreatePatient()
     {
         $repo = new \LibreEHR\Core\Emr\PatientRepository();
-        $id = $repo->create( array(
+        $id = $repo->create(array(
             'DOB' => '1980-11-11',
             'firstName' => 'Plastic',
             'lastName' => 'Redcup',
         ));
+        return $id;
     }
 
     public function testUpdatePatient()
     {
         $repo = new \LibreEHR\Core\Emr\PatientRepository();
-        $id = $repo->create( array(
+        $id = $repo->create(array(
             'DOB' => '1980-11-11',
             'firstName' => 'Plastic',
             'lastName' => 'Redcup'
         ));
 
-        $repo->update( $id, array(
+        $repo->update($id, array(
             'lastName' => 'Bluecup'
         ));
     }
@@ -41,6 +41,6 @@ class PatientRepositoryTest extends TestCase
     public function testFindPatientByUsername()
     {
         $repo = new \LibreEHR\Core\Emr\PatientRepository();
-        $patient = $repo->find->byLastName( 'Plastic' );
+        return $repo->find->byLastName('Plastic'); //$patient
     }
 }

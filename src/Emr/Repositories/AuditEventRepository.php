@@ -24,13 +24,12 @@ class AuditEventRepository implements AuditEventRepositoryInterface
         return parent::find();
     }
 
-    public function create( AuditEventInterface $auditEventInterface )
+    public function create(AuditEventInterface $auditEventInterface)
     {
-        if ( is_a( $auditEventInterface, '\LibreEHR\Core\Emr\Eloquent\AuditEvent' ) ) {
+        if (is_a($auditEventInterface, '\LibreEHR\Core\Emr\Eloquent\AuditEvent')) {
             $auditEventInterface->save();
         }
 
         return $auditEventInterface;
     }
-
 }

@@ -25,25 +25,25 @@ class DocumentRepository extends AbstractRepository implements DocumentRepositor
         return parent::find();
     }
 
-    public function create( DocumentInterface $documentInterface )
+    public function create(DocumentInterface $documentInterface)
     {
         $documentInterface->save();
         $id = $documentInterface->getId();
-        foreach ( $documentInterface->getCategories() as $categoryId ) {
-            $results = DB::table('categories_to_documents')->insert(
+        $results = [];
+        foreach ($documentInterface->getCategories() as $categoryId) {
+            $results[] = DB::table('categories_to_documents')->insert(
                 [ 'category_id' => $categoryId, 'document_id' => $id ]
             );
         }
+        return $results;
     }
 
-    public function update( $id, array $data )
+    public function update($id, array $data)
     {
-
     }
 
-    public function delete( $id )
+    public function delete($id)
     {
-
     }
 
     public function fetchAll()
@@ -51,18 +51,17 @@ class DocumentRepository extends AbstractRepository implements DocumentRepositor
         return Document::all();
     }
 
-    public function get( $id )
+    public function get($id)
     {
-        $document = Document::find( $id );
+        $document = Document::find($id);
         return $document;
     }
 
-    public function getFile( $id )
+    public function getFile($id)
     {
-        $document = $this->get( $id );
+        $document = $this->get($id);
         $url = $document->getUrl();
-        $file = file_get_contents( $url );
+        $file = file_get_contents($url);
         return $file;
     }
-
 }

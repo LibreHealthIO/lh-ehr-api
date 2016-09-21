@@ -13,18 +13,15 @@ class DocumentRepositoryTest extends TestCase
 
     public function tearDown()
     {
-
     }
 
     public function testGet()
     {
-
         $documentRepository = new DocumentRepository();
-        $document = $documentRepository->get( 9 );
+        $document = $documentRepository->get(9);
         $categories = $document->categories;
-        foreach ( $categories as $cat ) {
+        foreach ($categories as $cat) {
             echo $cat;
         }
     }
-
 }

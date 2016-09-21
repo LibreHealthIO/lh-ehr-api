@@ -29,12 +29,12 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
         return parent::find();
     }
 
-    public function create( PatientInterface $patientInterface )
+    public function create(PatientInterface $patientInterface)
     {
-        if ( is_a( $patientInterface, $this->model() ) ) {
+        if (is_a($patientInterface, $this->model())) {
             $photo = $patientInterface->getPhoto();
 
-            if ( !$patientInterface->getId() ) {
+            if (!$patientInterface->getId()) {
                 // If a pid is not provided, we have to increment the pid in SQL
                 // because though it's not the primary key, it must be unique.
                 // This subquery increments the pid from the max in the table
@@ -44,59 +44,57 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
                     ->take(1)->toSql();
 
                 $pid = DB::raw("($subquery)");
-                $patientInterface->setAttribute( 'pid', $pid  );
-                $patientInterface->setAttribute( 'pubpid', $pid  );
+                $patientInterface->setAttribute('pid', $pid);
+                $patientInterface->setAttribute('pubpid', $pid);
             }
 
             $patientInterface->save();
-            $patientInterface = $this->get( $patientInterface->id );
+            $patientInterface = $this->get($patientInterface->id);
 
             // TODO use document Repository to get the path from some config
             $docpath = "/Users/kchapple/Dev/www/openemr_github/sites/default/documents";
-            mkdir( $docpath."/".$patientInterface->getPid() );
+            mkdir($docpath."/".$patientInterface->getPid());
             $filepath = $docpath."/".$patientInterface->getPid()."/".$photo->filename;
-            $ifp = fopen( $filepath, "wb");
-            fwrite($ifp, base64_decode( $photo->base64Data ) );
+            $ifp = fopen($filepath, "wb");
+            fwrite($ifp, base64_decode($photo->base64Data));
             fclose($ifp);
 
-            $documentRepo = App::make( 'LibreEHR\Core\Contracts\DocumentRepositoryInterface' );
-            $photo->setType( 'file_url' );
-            $photo->setUrl( "file://$filepath" );
-            $photo->setDate( date('Y-m-d') );
-            $photo->setForeignId( $patientInterface->getPid() );
-            $photo->addCategory( 10 ); // 10 === 'Patient Photograph'
+            $documentRepo = App::make('LibreEHR\Core\Contracts\DocumentRepositoryInterface');
+            $photo->setType('file_url');
+            $photo->setUrl("file://$filepath");
+            $photo->setDate(date('Y-m-d'));
+            $photo->setForeignId($patientInterface->getPid());
+            $photo->addCategory(10); // 10 === 'Patient Photograph'
 
-            $documentRepo->create( $photo );
+            $documentRepo->create($photo);
         }
 
         return $patientInterface;
     }
 
-    public function onAfterFind( $entity )
+    public function onAfterFind($entity)
     {
-        $documentRepository = new DocumentRepository( new Finder() );
-        $documents = $documentRepository->finder()->pushCriteria( new DocumentByPid( $entity->getPid(), '10'  ) );
+        $documentRepository = new DocumentRepository(new Finder());
+        $documents = $documentRepository->finder()->pushCriteria(new DocumentByPid($entity->getPid(), '10'));
         $photo = null;
-        foreach ( $documents as $d ) {
-            foreach ( $d->categories as $category ) {
-                if ( $category->id == '10' ) {
+        foreach ($documents as $d) {
+            foreach ($d->categories as $category) {
+                if ($category->id == '10') {
                     $photo = $d;
                     break;
                 }
             }
         }
-        $entity->setPhoto( $photo );
+        $entity->setPhoto($photo);
         return $entity;
     }
 
-    public function update( $id, array $data )
+    public function update($id, array $data)
     {
-
     }
 
-    public function delete( $id )
+    public function delete($id)
     {
-
     }
 
     public function fetchAll()
@@ -104,9 +102,8 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
         return Patient::all();
     }
 
-    public function get( $id )
+    public function get($id)
     {
         return Patient::find( $id );
     }
-
 }

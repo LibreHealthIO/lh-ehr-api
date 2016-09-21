@@ -10,9 +10,6 @@ class Document extends Model implements DocumentInterface
 {
     public $base64Data = null;
     public $filename = null;
-
-    //protected $categories = array();
-
     protected $table = 'documents';
     protected $primaryKey = 'id';
     public $timestamps = false;
@@ -22,7 +19,7 @@ class Document extends Model implements DocumentInterface
         return $this->id;
     }
 
-    public function setId( $id )
+    public function setId($id)
     {
         $this->id = $id;
         return $this;
@@ -30,10 +27,15 @@ class Document extends Model implements DocumentInterface
 
     public function categories()
     {
-        return $this->belongsToMany( 'LibreEHR\Core\Emr\Eloquent\Category', 'categories_to_documents', 'document_id', 'category_id' );
+        return $this->belongsToMany(
+            'LibreEHR\Core\Emr\Eloquent\Category',
+            'categories_to_documents',
+            'document_id',
+            'category_id'
+        );
     }
 
-    public function addCategory( $categoryId )
+    public function addCategory($categoryId)
     {
         $this->categories[]= $categoryId;
     }
@@ -46,7 +48,7 @@ class Document extends Model implements DocumentInterface
     {
         return $this->type;
     }
-    public function setType( $type )
+    public function setType($type)
     {
         $this->type = $type;
         return $this;
@@ -61,7 +63,7 @@ class Document extends Model implements DocumentInterface
     {
         return $this->url;
     }
-    public function setUrl( $url )
+    public function setUrl($url)
     {
         $this->url = $url;
         return $this;
@@ -71,7 +73,7 @@ class Document extends Model implements DocumentInterface
     {
         return $this->date;
     }
-    public function setDate( $date )
+    public function setDate($date)
     {
         $this->date = $date;
         return $this;
@@ -81,7 +83,7 @@ class Document extends Model implements DocumentInterface
     {
         return $this->mimetype;
     }
-    public function setMimetype( $mimetype )
+    public function setMimetype($mimetype)
     {
         $this->mimetype = $mimetype;
         return $this;
@@ -91,10 +93,9 @@ class Document extends Model implements DocumentInterface
     {
         return $this->foreign_id;
     }
-    public function setForeignId( $id )
+    public function setForeignId($id)
     {
         $this->foreign_id = $id;
         return $this;
     }
-
 }

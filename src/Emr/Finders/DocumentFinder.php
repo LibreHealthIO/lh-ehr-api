@@ -9,12 +9,12 @@ use LibreEHR\Core\Emr\Eloquent\PatientData as Patient;
 class DocumentFinder extends AbstractFinder implements DocumentFinderInterface
 {
 
-    public function byPid( $pid )
+    public function byPid($pid)
     {
         try {
             $documents = Document::where('foreign_id', $pid)->all();
             return $documents;
-        } catch ( ErrorException $e ) {
+        } catch (ErrorException $e) {
             //Do stuff if it doesn't exist.
         }
     }
