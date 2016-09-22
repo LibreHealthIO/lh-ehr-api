@@ -4,8 +4,9 @@ namespace LibreEHR\Core\Emr\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
 use LibreEHR\Core\Contracts\ProviderInterface;
+use LibreEHR\Core\Contracts\ValueSetInterface;
 
-class ProviderData extends Model implements ProviderInterface
+class ProviderData extends Model implements ProviderInterface, ValueSetInterface
 {
     protected $connection = 'auth';
     
@@ -79,5 +80,16 @@ class ProviderData extends Model implements ProviderInterface
     {
         $this->address = $address;
         return $this;
+    }
+
+    public function getName()
+    {
+        // TODO @leo: Implement getName() method.
+    }
+
+    public function getCode()
+    {
+        // TODO @leo : Implement getCode() method.
+
     }
 }

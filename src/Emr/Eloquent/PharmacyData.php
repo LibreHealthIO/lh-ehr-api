@@ -4,8 +4,9 @@ namespace LibreEHR\Core\Emr\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
 use LibreEHR\Core\Contracts\PharmacyInterface;
+use LibreEHR\Core\Contracts\ValueSetInterface;
 
-class PharmacyData extends Model implements PharmacyInterface
+class PharmacyData extends Model implements PharmacyInterface, ValueSetInterface
 {
     protected $connection = 'auth';
     
@@ -57,5 +58,11 @@ class PharmacyData extends Model implements PharmacyInterface
     {
         $this->registered_status = $registeredStatus;
         return $this;
+    }
+
+    public function getCode()
+    {
+        // TODO @leo
+        return "This is the Code";
     }
 }
