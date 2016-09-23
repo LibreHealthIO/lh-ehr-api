@@ -62,7 +62,6 @@ class PharmacyData extends Model implements PharmacyInterface, ValueSetInterface
 
     public function getCode()
     {
-        // TODO @leo
-        return "This is the Code";
+        return $this->getId();
     }
 }

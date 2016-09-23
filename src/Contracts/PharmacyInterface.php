@@ -12,4 +12,5 @@ interface PharmacyInterface extends ModelInterface
     public function setAddress($address);
     public function getregisteredStatus();
     public function setregisteredStatus($registeredStatus);
+    public function getCode();
 }
