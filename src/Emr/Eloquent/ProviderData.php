@@ -10,7 +10,7 @@ class ProviderData extends Model implements ProviderInterface, ValueSetInterface
 {
     protected $connection = 'auth';
     
-    protected $table = 'providers';
+    protected $table = 'provider';
 
     protected $primaryKey = 'id';
 
@@ -73,12 +73,12 @@ class ProviderData extends Model implements ProviderInterface, ValueSetInterface
 
     public function getName()
     {
-        return $this->practice;
+        return $this->practice_name;
     }
 
     public function setName($practiceName)
     {
-        $this->practice = $practiceName;
+        $this->practice_name = $practiceName;
         return $this;
     }
 
