@@ -49,17 +49,6 @@ class ProviderData extends Model implements ProviderInterface, ValueSetInterface
         return $this;
     }
 
-    public function getPractice()
-    {
-        return $this->practice;
-    }
-
-    public function setPractice($practice)
-    {
-        $this->practice = $practice;
-        return $this;
-    }
-
     public function getEmailAddress()
     {
         return $this->email;
@@ -82,14 +71,59 @@ class ProviderData extends Model implements ProviderInterface, ValueSetInterface
         return $this;
     }
 
+    public function getTown()
+    {
+        return $this->town;
+    }
+
+    public function setTown($town)
+    {
+        $this->town = $town;
+        return $this;
+    }
+
+    public function getState()
+    {
+        return $this->state;
+    }
+
+    public function setState($state)
+    {
+        $this->state = $state;
+        return $this;
+    }
+
+    public function getCountry()
+    {
+        return $this->country;
+    }
+
+    public function setCountry($country)
+    {
+        $this->country = $country;
+        return $this;
+    }
+
     public function getName()
     {
-        // TODO @leo: Implement getName() method.
+        return $this->practice_name;
+    }
+
+    public function setName($practiceName)
+    {
+        $this->practice_name = $practiceName;
+        return $this;
     }
 
     public function getCode()
     {
-        // TODO @leo : Implement getCode() method.
-
+        $provider['id'] = uniqid($this->getId());
+        $provider['name'] = $this->getName();
+        $provider['practiceName'] = $this->getName();
+        $provider['address'] = $this->getAddress() . ', '
+                             . $this->getTown() . ', '
+                             . $this->getState() . ', '
+                             . $this->getCountry();
+        return $provider;
     }
 }
