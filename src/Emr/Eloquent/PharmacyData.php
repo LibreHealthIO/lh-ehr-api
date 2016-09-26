@@ -29,12 +29,12 @@ class PharmacyData extends Model implements PharmacyInterface, ValueSetInterface
 
     public function getName()
     {
-        return $this->name;
+        return $this->pharmacy_name;
     }
 
     public function setName($name)
     {
-        $this->name = $name;
+        $this->pharmacy_name = $name;
         return $this;
     }
 
@@ -49,12 +49,45 @@ class PharmacyData extends Model implements PharmacyInterface, ValueSetInterface
         return $this;
     }
 
-    public function getregisteredStatus()
+    public function getTown()
+    {
+        return $this->town;
+    }
+
+    public function setTown($town)
+    {
+        $this->town = $town;
+        return $this;
+    }
+
+    public function getState()
+    {
+        return $this->state;
+    }
+
+    public function setState($state)
+    {
+        $this->state = $state;
+        return $this;
+    }
+
+    public function getCountry()
+    {
+        return $this->country;
+    }
+
+    public function setCountry($country)
+    {
+        $this->country = $country;
+        return $this;
+    }
+
+    public function getRegisteredStatus()
     {
         return $this->registered_status;
     }
 
-    public function setregisteredStatus($registeredStatus)
+    public function setRegisteredStatus($registeredStatus)
     {
         $this->registered_status = $registeredStatus;
         return $this;
@@ -62,6 +95,13 @@ class PharmacyData extends Model implements PharmacyInterface, ValueSetInterface
 
     public function getCode()
     {
-        return $this->getId();
+        $pharmacy['id'] = uniqid($this->getId());
+        $pharmacy['name'] = $this->getName();
+        $pharmacy['name'] = $this->getName();
+        $pharmacy['address'] = $this->getAddress() . ', '
+                             . $this->getTown() . ', '
+                             . $this->getState() . ', '
+                             . $this->getCountry();
+        return $pharmacy;
     }
 }

@@ -14,7 +14,11 @@ interface ProviderInterface extends ModelInterface
     public function setEmailAddress($emailAddress);
     public function getAddress();
     public function setAddress($address);
-    public function getName();
+    public function getTown();
+    public function setTown($town);
+    public function getState();
+    public function setState($state);
+    public function getCountry();
+    public function setCountry($country);
     public function setName($practiceName);
-    public function getCode();
 }
