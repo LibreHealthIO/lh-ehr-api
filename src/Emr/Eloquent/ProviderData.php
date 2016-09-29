@@ -126,4 +126,14 @@ class ProviderData extends Model implements ProviderInterface, ValueSetInterface
                              . $this->getCountry();
         return $provider;
     }
+
+    public function getEmrId()
+    {
+        return $this->emr_id;
+    }
+    public function setEmrId($emrId)
+    {
+        $this->emr_id = $emrId;
+        return $this;
+    }
 }
