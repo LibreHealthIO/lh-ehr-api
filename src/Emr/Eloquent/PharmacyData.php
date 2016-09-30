@@ -104,4 +104,14 @@ class PharmacyData extends Model implements PharmacyInterface, ValueSetInterface
                              . $this->getCountry();
         return $pharmacy;
     }
+
+    public function getEmrId()
+    {
+        return $this->emr_id;
+    }
+    public function setEmrId($emrId)
+    {
+        $this->emr_id = $emrId;
+        return $this;
+    }
 }

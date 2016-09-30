@@ -24,4 +24,10 @@ interface PatientInterface extends ModelInterface
     public function getPhoto();
     public function setPhoto( $photo );
 
+    public function getProviderId();
+    public function setProviderId( $providerId );
+    public function getPharmacyId();
+    public function setPharmacyId( $pharmacyId );
+    public function getStatus();
+    public function setStatus( $Status);
 }
