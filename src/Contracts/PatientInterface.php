@@ -24,4 +24,7 @@ interface PatientInterface extends ModelInterface
     public function getPhoto();
     public function setPhoto( $photo );
 
+    public function getStatus();
+    public function setStatus( $status );
+
 }
