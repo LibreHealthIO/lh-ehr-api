@@ -17,4 +17,6 @@ interface PharmacyInterface extends ModelInterface
     public function setCountry($country);
     public function getRegisteredStatus();
     public function setRegisteredStatus($registeredStatus);
+    public function getEmrId();
+    public function setEmrId($emrId);
 }

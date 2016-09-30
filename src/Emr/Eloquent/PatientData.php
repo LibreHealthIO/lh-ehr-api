@@ -125,14 +125,37 @@ class PatientData extends Model implements PatientInterface
         return $this;
     }
 
+    public function getProviderId()
+    {
+        return $this->providerID;
+    }
+
+    public function setProviderId( $providerId )
+    {
+        $this->providerID = $providerId;
+        return $this;
+    }
+
+    public function getPharmacyId()
+    {
+        return $this->pharmacy_id;
+    }
+
+    public function setPharmacyId( $pharmacyId )
+    {
+        $this->pharmacy_id = $pharmacyId;
+        return $this;
+    }
+
     public function getStatus()
     {
-        return $this->imm_reg_status;
+        return $this->status;
     }
 
     public function setStatus( $status )
     {
-        $this->imm_reg_status = $status;
+        $this->status= $status;
         return $this;
     }
+
 }
