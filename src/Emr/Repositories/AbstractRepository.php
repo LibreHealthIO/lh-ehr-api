@@ -31,7 +31,7 @@ abstract class AbstractRepository implements RepositoryInterface
 
     public function setConnection( $connection )
     {
-        $this->connection = $connection;
+        return $this->connection = $connection;
     }
 
     /**

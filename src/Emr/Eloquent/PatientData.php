@@ -124,4 +124,15 @@ class PatientData extends Model implements PatientInterface
         $this->photo = $photo;
         return $this;
     }
+
+    public function getStatus()
+    {
+        return $this->imm_reg_status;
+    }
+
+    public function setStatus( $status )
+    {
+        $this->imm_reg_status = $status;
+        return $this;
+    }
 }
