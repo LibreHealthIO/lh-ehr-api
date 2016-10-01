@@ -45,14 +45,4 @@ class ProviderRepository extends AbstractRepository implements ProviderRepositor
     public function delete($id)
     {
     }
-
-    public function fetchAll()
-    {
-        return Provider::all();
-    }
-
-    public function get($id)
-    {
-        return Provider::find($id);
-    }
 }

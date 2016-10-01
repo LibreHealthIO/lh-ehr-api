@@ -149,12 +149,22 @@ class PatientData extends Model implements PatientInterface
 
     public function getStatus()
     {
-        return $this->status;
+        return $this->reg_status;
     }
 
     public function setStatus( $status )
     {
-        $this->status= $status;
+        $this->reg_status= $status;
+        return $this;
+    }
+
+    public function getGroupId()
+    {
+        return $this->group_id;
+    }
+    public function setGroupId( $groupId )
+    {
+        $this->group_id = $groupId;
         return $this;
     }
 

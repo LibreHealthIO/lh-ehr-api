@@ -6,5 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 abstract class AbstractModel extends Model
 {
-    protected $connection = 'mysql';
+    protected $connectionName = 'mysql';
+
+    public function getConnectionName()
+    {
+        return $this->connectionName;
+    }
+
+    public function setConnectionName( $name )
+    {
+        $this->connectionName = $name;
+        $this->setConnection( $this->connectionName );
+        return $this;
+    }
 }

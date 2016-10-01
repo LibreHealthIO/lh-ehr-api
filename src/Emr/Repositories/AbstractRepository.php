@@ -48,7 +48,9 @@ abstract class AbstractRepository implements RepositoryInterface
      */
     public function makeModel()
     {
-        return App::make( $this->model() );
+        $model = App::make( $this->model() );
+        $model->setConnection( $this->connection );
+        return $model;
     }
 
     /**
@@ -58,7 +60,6 @@ abstract class AbstractRepository implements RepositoryInterface
     {
         try {
             // TODO this is leaky abstraction, depends on Eloquent, should be pushed into child class
-            $model->setConnection( $this->connection );
             $result = $model->firstOrFail();
         } catch ( ErrorException $e ) {
             // TODO Do stuff if it doesn't exist.
@@ -89,5 +90,15 @@ abstract class AbstractRepository implements RepositoryInterface
         return $entity;
     }
 
+    public function get($id)
+    {
+        $model = $this->makeModel();
+        return $model->find($id);
+    }
 
+    public function fetchAll()
+    {
+        $model = $this->makeModel();
+        return $model->all();
+    }
 }

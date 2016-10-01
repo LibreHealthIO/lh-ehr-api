@@ -46,17 +46,6 @@ class DocumentRepository extends AbstractRepository implements DocumentRepositor
 
     }
 
-    public function fetchAll()
-    {
-        return Document::all();
-    }
-
-    public function get( $id )
-    {
-        $document = Document::find( $id );
-        return $document;
-    }
-
     public function getFile( $id )
     {
         $document = $this->get( $id );

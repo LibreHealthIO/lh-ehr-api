@@ -29,5 +29,7 @@ interface PatientInterface extends ModelInterface
     public function getPharmacyId();
     public function setPharmacyId( $pharmacyId );
     public function getStatus();
-    public function setStatus( $status);
+    public function setStatus( $status );
+    public function getGroupId();
+    public function setGroupId( $groupId );
 }

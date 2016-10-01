@@ -136,4 +136,15 @@ class ProviderData extends Model implements ProviderInterface, ValueSetInterface
         $this->emr_id = $emrId;
         return $this;
     }
+
+    public function getConnectionKey()
+    {
+        return $this->connection_key;
+    }
+
+    public function setConnectionKey( $key )
+    {
+        $this->connection_key = $key;
+        return $this;
+    }
 }

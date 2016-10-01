@@ -32,6 +32,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     public function create(AppointmentInterface $appointmentInterface)
     {
         if (is_a($appointmentInterface, $this->model())) {
+            $appointmentInterface->setConnection($this->connection);
             $appointmentInterface->save();
             $appointmentInterface = $this->get($appointmentInterface->pc_eid);
         }
@@ -41,7 +42,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     public function update($id, $status)
     {
-        $appointmentInterface = Appointment::find($id);
+        $appointmentInterface = Appointment::connection($this->connection)->find($id);
         $appointmentInterface->setPcApptStatus($status);
         $appointmentInterface->save();
 
@@ -50,7 +51,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     public function getSlots($data)
     {
-        $busySlots = DB::connection('mysql')->table('libreehr_postcalendar_events')
+        $busySlots = DB::connection($this->connection)->table('libreehr_postcalendar_events')
             ->where($this->provideSlotConditions($data))
             ->get();
 
@@ -202,7 +203,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                 }
             }
         }
-        return Appointment::where($conditions)->get();
+        return Appointment::connection($this->connection)->where($conditions)->get();
     }
 
     public function getUnavailableSlots()
@@ -214,17 +215,6 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     {
 
     }
-
-    public function fetchAll()
-    {
-        return Appointment::all();
-    }
-
-    public function get( $id )
-    {
-        return Appointment::find( $id );
-    }
-
 
     private function provideSlotConditions($data)
     {
