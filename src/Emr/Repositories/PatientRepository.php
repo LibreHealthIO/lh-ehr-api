@@ -91,9 +91,10 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
         return $entity;
     }
 
-    public function update( $id, array $data )
+    public function update( PatientInterface $patientInterface )
     {
-
+        $patientInterface->save();
+        return $patientInterface;
     }
 
     public function delete( $id )

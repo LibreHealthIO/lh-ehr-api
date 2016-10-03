@@ -203,7 +203,9 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                 }
             }
         }
-        return Appointment::connection($this->connection)->where($conditions)->get();
+
+        $model = $this->makeModel();
+        return $model->where($conditions)->get();
     }
 
     public function getUnavailableSlots()
