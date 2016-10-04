@@ -28,6 +28,16 @@ class AppointmentData extends Model implements AppointmentInterface
         return $this;
     }
 
+    public function getPatientId()
+    {
+        return $this->pc_pid;
+    }
+    public function setPatientId($id)
+    {
+        $this->pc_pid = $id;
+        return $this;
+    }
+
     public function getStartTime()
     {
         return $this->getPcEventDate() . ' ' . $this->pc_startTime;
@@ -175,4 +185,15 @@ class AppointmentData extends Model implements AppointmentInterface
     {
         return date('Y-m-d', $timestamp);
     }
+
+    private function timeToTimestamp($timestamp)
+    {
+        return date('H:i:s', $timestamp);
+    }
+
+    private function dateToTimestamp($timestamp)
+    {
+        return date('Y-m-d', $timestamp);
+    }
+
 }
