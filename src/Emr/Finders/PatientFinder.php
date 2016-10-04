@@ -2,9 +2,7 @@
 
 namespace LibreEHR\Core\Emr\Finders;
 
-use LibreEHR\Core\Contracts\PatientFinderInterface;
-use LibreEHR\Core\Emr\Eloquent\Document;
-use LibreEHR\Core\Emr\Eloquent\PatientData as Patient;
+use LibreEHR\Core\Contracts\FinderInterface;
 
 class PatientFinder extends AbstractFinder implements FinderInterface
 {

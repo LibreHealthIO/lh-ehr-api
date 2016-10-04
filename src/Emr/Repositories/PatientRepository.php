@@ -29,6 +29,16 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
         return parent::find();
     }
 
+    public function getPatientsByParam( $data )
+    {
+        $conditions = [];
+        if ( isset($data['groupId']) ) {
+            $conditions[] = ['group_id', '=', $data['groupId']];
+        }
+        $model = $this->makeModel();
+        return $model->where($conditions)->get();
+    }
+
     public function create( PatientInterface $patientInterface )
     {
         if ( is_a( $patientInterface, $this->model() ) ) {
