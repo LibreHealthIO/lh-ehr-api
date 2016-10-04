@@ -84,12 +84,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             }
         }
 
-
-
-
-
         $appointmentInterface->save();
-
         return $appointmentInterface;
     }
 
@@ -259,7 +254,10 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     public function delete( $id )
     {
-
+        $appointment = new Appointment();
+        $appointment->setConnectionName($this->connection);
+        $appointmentInterface = $appointment->find($id);
+        return $appointmentInterface->delete();
     }
 
     private function provideSlotConditions($data)
