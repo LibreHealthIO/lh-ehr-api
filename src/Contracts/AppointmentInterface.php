@@ -9,4 +9,10 @@ interface AppointmentInterface extends ModelInterface
     public function getEndTime();
     public function setEndTime( $endTime );
 
+    public function getPatientId();
+    public function setPatientId( $patientId );
+    public function getProviderId();
+    public function setProviderId( $providerId );
+
+
 }

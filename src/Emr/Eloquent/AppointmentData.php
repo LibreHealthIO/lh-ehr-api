@@ -38,6 +38,17 @@ class AppointmentData extends Model implements AppointmentInterface
         return $this;
     }
 
+    public function getProviderId()
+    {
+        return $this->pc_aid;
+    }
+
+    public function setProviderId( $providerId )
+    {
+        $this->pc_aid = $providerId;
+        return $this;
+    }
+
     public function getStartTime()
     {
         return strtotime($this->getPcEventDate() . ' ' . $this->pc_startTime);
