@@ -40,12 +40,51 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         return $appointmentInterface;
     }
 
-    public function update($id, $status)
+    public function update($id, $data)
     {
-        $appointmentInterface = Appointment::connection($this->connection)->find($id);
-        $appointmentInterface->setPcApptStatus($status);
-        $appointmentInterface->save();
 
+        $appointment = new Appointment();
+        $appointment->setConnectionName($this->connection);
+        $appointmentInterface = $appointment->find($id);
+        foreach ($data as $k => $ln) {
+            if ($k == 'status') {
+                $appointmentInterface->setPcApptStatus($ln);
+            }
+            if ($k == 'description') {
+                $appointmentInterface->setDescription($ln);
+            }
+            if ($k == 'start') {
+                $appointmentInterface->setStartTime($ln);
+            }
+            if ($k == 'end') {
+                $appointmentInterface->setEndTime($ln);
+            }
+            if ($k == 'extension') {
+                $extensions = $ln[0]['extension'];
+                $location = [];
+                foreach ($extensions as $extension) {
+                    $url = $extension['url'];
+                    if ($url =="#portal-uri") {
+                        $location['portalUri'] = $extension['valueString'];
+                    }
+                    if ($url =="#room-key") {
+                        $location['roomKey'] = $extension['valueString'];
+                    }
+                    if ($url =="#pin") {
+                        $location['pin'] = $extension['valueString'];
+                    }
+                    if ($url =="#provider-id") {
+                        $location['providerId'] = $extension['valueString'];
+                    }
+                    if ($url =="#patient-id") {
+                        $appointmentInterface->setPatientId($extension['valueString']);
+                    }
+                }
+                $appointmentInterface->setLocation(json_encode($location, true));
+            }
+        }
+
+        $appointmentInterface->save();
         return $appointmentInterface;
     }
 
@@ -215,7 +254,10 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     public function delete( $id )
     {
-
+        $appointment = new Appointment();
+        $appointment->setConnectionName($this->connection);
+        $appointmentInterface = $appointment->find($id);
+        return $appointmentInterface->delete();
     }
 
     private function provideSlotConditions($data)
