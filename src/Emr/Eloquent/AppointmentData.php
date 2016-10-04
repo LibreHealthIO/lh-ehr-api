@@ -40,7 +40,7 @@ class AppointmentData extends Model implements AppointmentInterface
 
     public function getStartTime()
     {
-        return $this->getPcEventDate() . ' ' . $this->pc_startTime;
+        return strtotime($this->getPcEventDate() . ' ' . $this->pc_startTime);
     }
 
     public function setStartTime( $startTime )
@@ -51,7 +51,7 @@ class AppointmentData extends Model implements AppointmentInterface
 
     public function getEndTime()
     {
-        return $this->getPcEventDate() . ' ' . $this->pc_endTime;
+        return strtotime($this->getPcEventDate() . ' ' . $this->pc_endTime);
     }
 
     public function setEndTime( $endTime )
