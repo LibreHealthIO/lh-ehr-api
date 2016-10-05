@@ -215,7 +215,23 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     public function getAppointmentsByParam($data)
     {
         $conditions = [];
-        $conditions[] = ['pc_pid', '=', $data['patient']];
+        $whereInPid = [];
+        if ( isset($data['groupId']) ) {
+
+            // If we are given a group Id, get all the members of group
+            $groupMembers = DB::connection($this->connection)->table('patient_data')
+                ->where( 'group_id', '=', $data['groupId'] )
+                ->get();
+
+            // Build a where IN array
+            foreach ( $groupMembers as $groupMember ) {
+                $whereInPid[] = $groupMember->pid;
+            }
+
+        } else {
+            $conditions[] = ['pc_pid', '=', $data['patient']];
+        }
+
         foreach($data as $k => $ln) {
             if (strpos($ln, 'le') !== false) {
                 $conditions[] = ['pc_eventDate', '<=', $this->getDate($ln, "lt")];
@@ -244,7 +260,11 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         }
 
         $model = $this->makeModel();
-        return $model->where($conditions)->get();
+        $where =  $model->where($conditions);
+        if ( count($whereInPid) ) {
+            $where->whereIn( 'pc_pid', $whereInPid );
+        }
+        return $where->get();
     }
 
     public function getUnavailableSlots()
