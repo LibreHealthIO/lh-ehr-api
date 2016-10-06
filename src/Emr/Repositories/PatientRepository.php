@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\App;
 use LibreEHR\Core\Emr\Criteria\DocumentByPid;
 use LibreEHR\Core\Emr\Eloquent\PatientData as Patient;
 use LibreEHR\Core\Emr\Finders\Finder;
+use LibreEHR\Core\Emr\Finders\PatientFinder;
 
 class PatientRepository extends AbstractRepository implements PatientRepositoryInterface
 {
@@ -27,6 +28,14 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
     public function find()
     {
         return parent::find();
+    }
+
+    public function findByPid( $pid )
+    {
+        //return DB::connection($this->connection)->table('patient_data')->where( 'pid', $pid )->first();
+
+        $patient = $this->makeModel();
+        return $patient->where('pid', $pid)->first();
     }
 
     public function getPatientsByParam( $data )
