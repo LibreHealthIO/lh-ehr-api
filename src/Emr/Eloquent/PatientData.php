@@ -168,4 +168,34 @@ class PatientData extends Model implements PatientInterface
         return $this;
     }
 
+    public function getStreet()
+    {
+        return $this->street;
+    }
+    public function setStreet( $street )
+    {
+        $this->street = $street;
+        return $this;
+    }
+
+    public function getCity()
+    {
+        return $this->city;
+    }
+    public function setCity( $city )
+    {
+        $this->city = $city;
+        return $this;
+    }
+
+    public function getCountry()
+    {
+        return $this->country_code;
+    }
+    public function setCountry( $country)
+    {
+        $this->country_code = $country;
+        return $this;
+    }
+
 }
