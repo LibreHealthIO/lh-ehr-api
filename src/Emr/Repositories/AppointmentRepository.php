@@ -97,102 +97,79 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         $param = array(
             'scheduleStart' => 8,
             'scheduleEnd' => 17,
-            'calendarInterval' => 15,
+            'calendarInterval' => 15*60,
+            'dayInterval'  => $this->getDayInterval($busySlots)
         );
 
         $allSlots = $this->addFreeSlots($busySlots, $param);
-        $slotFormat = $this->slotFormat($allSlots, $param);
-
-        return $slotFormat;
-    }
-
-    private function slotFormat($allSlots, $param)
-    {
-
-        $slotFormat = array();
-        foreach ($allSlots as $key => $slot) {
-
-            $slotFormat[$key]['startTime'] = date("H:i:s", mktime($slot['hour'], $slot['minute'], 0, 0, 0, 0));
-            $slotFormat[$key]['endTime'] = date("H:i:s", mktime($slot['hour'], $slot['minute'] + $param['calendarInterval'], 0, 0, 0, 0));
-            $slotFormat[$key]['status'] = $slot['status'];
-        }
-        return $slotFormat;
-
+        
+        return $allSlots;
     }
 
 
-    public function addFreeSlots($busy_slots, $param)
+    public function addFreeSlots($busySlots, $param)
     {
-        if($busy_slots) {
-            $i = 0;
-            $busyInterval = [];
-            foreach ($busy_slots as $slot) {
-                $busyInterval[$i]['startTime'] = $slot->pc_startTime;
-                $busyInterval[$i]['endTime'] = $slot->pc_endTime;
-                $i++;
+        if ($busySlots) {
+            $allSlots = [];
+            $slotDateTimes = [];
+            foreach ($busySlots as $slot) {
+                $slotDateTimes[$slot->pc_eid] = strtotime($slot->pc_startTime.' '.$slot->pc_eventDate);
             }
-            $scheduleStart = $param['scheduleStart'];
-            $scheduleEnd = $param['scheduleEnd'];
+
+            $startDate = $param['dayInterval']['min'];
+            
+            // TODO Add functionality for getting params from Globals
+
+//            $scheduleStart = $param['scheduleStart'];  // 8 am
+//            $scheduleEnd = $param['scheduleEnd'];      // 17 pm
+
+
+            $timeStart = '8 am';
+            $timeEnd = '5 pm';
+
+
             $calendarInterval = $param['calendarInterval'];
+            $dayInterval = floor(($param['dayInterval']['max'] - $param['dayInterval']['min']) / (60 * 60 * 24));
 
-            // $times is an array of associative arrays, where each sub-array
-            // has keys 'hour', 'minute' and 'mer'.
-            //
-            $allSlots = array();
 
-            // For each hour in the schedule...
-            //
-            for($blockNum = $scheduleStart; $blockNum <= $scheduleEnd; $blockNum++){
+//            $day = 60*60*24;  1 day
+            $day = 86400;
 
-                // $minute is an array of time slot strings within this hour.
-                $minute = array('00');
 
-                for($minutes = $calendarInterval; $minutes <= 60; $minutes += $calendarInterval) {
-                    if($minutes <= '9'){
-                        $under_ten = "0" . $minutes;
-                        array_push($minute, "$under_ten");
-                    }
-                    else if($minutes >= '60') {
-                        break;
-                    }
-                    else {
-                        array_push($minute, "$minutes");
-                    }
-                }
-
-                foreach ($minute as $m ) {
-                    array_push($allSlots, array("hour"=>$blockNum, "minute"=>$m, "status" => "free"));
-                }
-            }
-
-            foreach ($allSlots as $key => $slot) {
-
-                foreach ($busyInterval as $busy) {
-                    $arStart = explode(':', $busy['startTime']);
-                    if ($arStart[0] < $scheduleStart) {
-                        $arStart[0] = (int)$arStart[0] + 12;
-                    }
-                    if ($slot['hour'] != $arStart[0]) {
-                        continue;
-                    }
-                    if ($slot['minute'] != $arStart[1]) {
-                        continue;
-                    }
-                    $arEnd = explode(':', $busy['endTime']);
-                    if ($arEnd[0] < $scheduleStart) {
-                        $arEnd[0] = (int)$arEnd[0] + 12;
-                    }
-
-                    $busyKey = $this->busySlotKey($allSlots, $key, $arEnd);
-
-                    foreach ($busyKey as $key) {
-                        $allSlots[$key]['status'] = 'busy';
+            for ($d = 1; $d <= $dayInterval; $d ++) {
+                $currentDay = date('d/m/Y', ($startDate + $d * $day));
+                $scheduleStart = strtotime($timeStart . ' ' .$currentDay);
+                $scheduleEnd = strtotime($timeEnd . ' ' . $currentDay);
+                for ($t = $scheduleStart; $t <= $scheduleEnd; $t += $calendarInterval) {
+                    if (in_array($t, $slotDateTimes)) {
+                        $allSlots[] = [
+                          'timestamp' => $t,
+                          'status'    => 'busy',
+                          'duration'  =>  $this->getSlotDuration($t, $slotDateTimes, $busySlots)
+                        ];
+                    } else {
+                        $allSlots[] = [
+                            'timestamp' => $t,
+                            'status'    => 'free',
+                            'duration'  =>  $calendarInterval/60 . ' minutes'
+                        ];
                     }
                 }
             }
 
             return $allSlots;
         }
+    }
+
+
+    private function getSlotDuration($timestamp, $slotDateTimes, $busySlots)
+    {
+        $id = array_search($timestamp, $slotDateTimes);
+        $busySlots->filter(function ($data) use ($id) {
+            if ($data->pc_eid == $id) {
+                return $data->pc_startTime - $data->pc_endTime;
+            }
+        });
     }
 
     private function busySlotKey(&$allSlots, $keyStart, array $endTime)
@@ -310,4 +287,16 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         }
     }
 
+    private function getDayInterval($busySlots)
+    {
+        $dates = [];
+        foreach ($busySlots as $slot) {
+            $dates [] = strtotime(substr($slot->pc_eventDate, 2));
+        }
+        $dayInterval = [
+            'min' => min($dates),
+            'max' => max($dates),
+        ];
+        return $dayInterval;
+    }
 }
