@@ -94,10 +94,12 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             ->where($this->provideSlotConditions($data))
             ->get();
 
+        $emrGlobals = $this->getGlobalSettings();
+
         $param = array(
-            'scheduleStart' => 8,
-            'scheduleEnd' => 17,
-            'calendarInterval' => 15*60,
+            'scheduleStart' => $emrGlobals['schedule_start'],
+            'scheduleEnd' => $emrGlobals['schedule_end'],
+            'calendarInterval' => $emrGlobals['calendar_interval'] * 60,    // minutes to seconds
             'dayInterval'  => $this->getDayInterval($busySlots)
         );
 
@@ -105,7 +107,6 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         
         return $allSlots;
     }
-
 
     public function addFreeSlots($busySlots, $param)
     {
@@ -117,29 +118,17 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             }
 
             $startDate = $param['dayInterval']['min'];
-            
-            // TODO Add functionality for getting params from Globals
-
-//            $scheduleStart = $param['scheduleStart'];  // 8 am
-//            $scheduleEnd = $param['scheduleEnd'];      // 17 pm
-
-
-            $timeStart = '8 am';
-            $timeEnd = '5 pm';
-
-
+            $timeStart = $param['scheduleStart'];
+            $timeEnd = $param['scheduleEnd'];
             $calendarInterval = $param['calendarInterval'];
             $dayInterval = floor(($param['dayInterval']['max'] - $param['dayInterval']['min']) / (60 * 60 * 24));
 
-
-//            $day = 60*60*24;  1 day
-            $day = 86400;
-
+            $day = 86400;    //  $day = 60*60*24;  1 day
 
             for ($d = 1; $d <= $dayInterval; $d ++) {
                 $currentDay = date('d/m/Y', ($startDate + $d * $day));
-                $scheduleStart = strtotime($timeStart . ' ' .$currentDay);
-                $scheduleEnd = strtotime($timeEnd . ' ' . $currentDay);
+                $scheduleStart = strtotime($timeStart . ':00 ' .$currentDay);
+                $scheduleEnd = strtotime($timeEnd . ':00 ' . $currentDay);
                 for ($t = $scheduleStart; $t <= $scheduleEnd; $t += $calendarInterval) {
                     if (in_array($t, $slotDateTimes)) {
                         $allSlots[] = [
@@ -172,22 +161,6 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         });
     }
 
-    private function busySlotKey(&$allSlots, $keyStart, array $endTime)
-    {
-
-        $busyKey = array();
-        for ($i = $keyStart; $i <= count($allSlots); $i++) {
-            if($allSlots[$i]['hour'] > $endTime[0]) {
-                break;
-            }
-            if($allSlots[$i]['hour'] == $endTime[0] && $allSlots[$i]['minute'] >= $endTime[1]) {
-                break;
-            }
-            $allSlots[$i]['status'] = 'busy';
-        }
-        return $busyKey;
-
-    }
 
     public function getAppointmentsByParam($data)
     {
@@ -298,5 +271,20 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             'max' => max($dates),
         ];
         return $dayInterval;
+    }
+
+    private function getGlobalSettings()
+    {
+        $globals = DB::connection($this->connection)->table('globals')
+            ->where('gl_name', 'like', 'calendar_interval')
+            ->orWhere('gl_name', 'like', 'schedule_end')
+            ->orWhere('gl_name', 'like', 'schedule_start')
+            ->get();
+
+        $emrGlobals = [];
+        foreach ($globals as $global) {
+            $emrGlobals[$global->gl_name] =$global->gl_value;
+        }
+        return $emrGlobals;
     }
 }
