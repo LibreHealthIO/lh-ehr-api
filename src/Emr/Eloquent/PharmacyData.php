@@ -95,8 +95,7 @@ class PharmacyData extends Model implements PharmacyInterface, ValueSetInterface
 
     public function getCode()
     {
-        $pharmacy['id'] = uniqid($this->getId());
-        $pharmacy['name'] = $this->getName();
+        $pharmacy['id'] = $this->getId();
         $pharmacy['name'] = $this->getName();
         $pharmacy['address'] = $this->getAddress() . ', '
                              . $this->getTown() . ', '

@@ -117,7 +117,7 @@ class ProviderData extends Model implements ProviderInterface, ValueSetInterface
 
     public function getCode()
     {
-        $provider['id'] = uniqid($this->getId());
+        $provider['id'] = $this->getId();
         $provider['name'] = $this->getName();
         $provider['practiceName'] = $this->getName();
         $provider['address'] = $this->getAddress() . ', '
