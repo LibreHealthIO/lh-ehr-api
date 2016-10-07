@@ -37,6 +37,6 @@ interface PatientInterface extends ModelInterface
     public function setStreet( $street );
     public function getCity();
     public function setCity( $city );
-    public function getCountry();
-    public function setCountry( $country);
+    public function getCounty();
+    public function setCounty( $country);
 }

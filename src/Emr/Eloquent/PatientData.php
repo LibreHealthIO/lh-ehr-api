@@ -170,11 +170,11 @@ class PatientData extends Model implements PatientInterface
 
     public function getStreet()
     {
-        return $this->street;
+        return explode('|', $this->street);
     }
     public function setStreet( $street )
     {
-        $this->street = $street;
+        $this->street = $this->streetsToLine($street);
         return $this;
     }
 
@@ -188,14 +188,27 @@ class PatientData extends Model implements PatientInterface
         return $this;
     }
 
-    public function getCountry()
+    public function getCounty()
     {
-        return $this->country_code;
+        return $this->county;
     }
-    public function setCountry( $country)
+    public function setCounty( $county )
     {
-        $this->country_code = $country;
+        $this->county = $county;
         return $this;
     }
 
+    private function streetsToLine($addressLines)
+    {
+        $address = '';
+        $arrayLength = count($addressLines) - 1;
+        foreach ($addressLines as $k => $addressLine) {
+            if ($k !== $arrayLength) {
+                $address .= $addressLine . ' | ';
+            } else {
+                $address .= $addressLine;
+            }
+        }
+        return $address;
+    }
 }
