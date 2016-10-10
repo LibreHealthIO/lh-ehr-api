@@ -38,6 +38,46 @@ class AppointmentData extends Model implements AppointmentInterface
         return $this;
     }
 
+    public function getPcTitle()
+    {
+        return $this->pc_title;
+    }
+    public function setPcTitle($title)
+    {
+        $this->pc_title = $title;
+        return $this;
+    }
+
+    public function getPcInformant()
+    {
+        return $this->pc_informant;
+    }
+    public function setPcInformant($informant)
+    {
+        $this->pc_informant = $informant;
+        return $this;
+    }
+
+    public function getPcCatid()
+    {
+        return $this->pc_catid;
+    }
+    public function setPcCatid($pcCatid)
+    {
+        $this->pc_catid = $pcCatid;
+        return $this;
+    }
+
+    public function getPcEventStatus()
+    {
+        return $this->pc_eventstatus;
+    }
+    public function setPcEventStatus($pcEventStatus)
+    {
+        $this->pc_eventstatus = $pcEventStatus;
+        return $this;
+    }
+
     public function getProviderId()
     {
         return $this->pc_aid;
@@ -128,12 +168,12 @@ class AppointmentData extends Model implements AppointmentInterface
 
     public function getPcTime()
     {
-        return $this->pc_time;
+        return strtotime($this->pc_time);
     }
-
-    public function setPcTime($pcTime)
+    
+    public function setPcTime($time)
     {
-        $this->pc_time = $pcTime;
+        $this->pc_time = date('Y-m-d H:m:i', $time);
         return $this;
     }
 
