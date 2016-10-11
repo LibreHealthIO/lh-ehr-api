@@ -307,4 +307,9 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         }
         return $emrGlobals;
     }
+
+    public function getGlobalCalendarInterval()
+    {
+        return $this->getGlobalSettings()['calendar_interval'];
+    }
 }
