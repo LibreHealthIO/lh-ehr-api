@@ -32,4 +32,11 @@ interface PatientInterface extends ModelInterface
     public function setStatus( $status );
     public function getGroupId();
     public function setGroupId( $groupId );
+
+    public function getStreet();
+    public function setStreet( $street );
+    public function getCity();
+    public function setCity( $city );
+    public function getCounty();
+    public function setCounty( $country);
 }
