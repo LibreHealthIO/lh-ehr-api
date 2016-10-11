@@ -170,7 +170,11 @@ class PatientData extends Model implements PatientInterface
 
     public function getStreet()
     {
-        return explode('|', $this->street);
+        $streets = explode('|', $this->street);
+        foreach ($streets as $k => $street) {
+            $streets[$k] = trim($street);
+        }
+        return $streets;
     }
     public function setStreet( $street )
     {
