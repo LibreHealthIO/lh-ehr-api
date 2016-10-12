@@ -118,7 +118,9 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
 
     public function delete( $id )
     {
-
+        return DB::connection($this->connection)->table('patient_data')
+            ->where( 'pid', '=', $id )
+            ->delete();
     }
 
 }
