@@ -115,7 +115,7 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
         $patient = DB::connection($this->connection)->table('patient_data')
             ->where( 'pid', '=', $patientInterface->getPid() )
             ->first();
-        $patientInterface->setId( $patient->getId() );
+        $patientInterface->setId( $patient->id );
         $patientInterface->save();
         return $patientInterface;
     }
