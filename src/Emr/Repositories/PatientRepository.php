@@ -112,6 +112,10 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
 
     public function update( PatientInterface $patientInterface )
     {
+        $patient = DB::connection($this->connection)->table('patient_data')
+            ->where( 'pid', '=', $patientInterface->getPid() )
+            ->first();
+        $patientInterface->setId( $patient->getId() );
         $patientInterface->save();
         return $patientInterface;
     }
