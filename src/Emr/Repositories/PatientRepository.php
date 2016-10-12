@@ -116,7 +116,7 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
             ->where( 'pid', '=', $patientInterface->getPid() )
             ->first();
         $patientInterface->setId( $patient->id );
-        $patientInterface->setExists( true );
+        $patientInterface->exists = true;
         $patientInterface->save();
         return $patientInterface;
     }
