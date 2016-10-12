@@ -19,4 +19,10 @@ abstract class AbstractModel extends Model
         $this->setConnection( $this->connectionName );
         return $this;
     }
+
+    protected function setExists( $exists )
+    {
+        $this->exists = $exists;
+        return $this;
+    }
 }
