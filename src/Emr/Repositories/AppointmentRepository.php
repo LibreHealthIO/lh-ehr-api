@@ -8,6 +8,7 @@
 
 namespace LibreEHR\Core\Emr\Repositories;
 
+use Carbon\Carbon;
 use LibreEHR\Core\Contracts\DocumentRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 use LibreEHR\Core\Contracts\AppointmentInterface;
@@ -100,67 +101,86 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             'scheduleStart' => $emrGlobals['schedule_start'],
             'scheduleEnd' => $emrGlobals['schedule_end'],
             'calendarInterval' => $emrGlobals['calendar_interval'] * 60,    // minutes to seconds
-            'dayInterval'  => $this->getDayInterval($busySlots)
+            'dayInterval'  => $this->getDayInterval($data)
         );
 
-        $allSlots = $this->addFreeSlots($busySlots, $param);
-        
+        $freeSlots = $this->addFreeSlots($param);
+        $allSlots = $this->addBusySlots($freeSlots, $busySlots, $param);
+
         return $allSlots;
     }
 
-    public function addFreeSlots($busySlots, $param)
+    public function addFreeSlots($param)
     {
-        if ($busySlots) {
-            $allSlots = [];
-            $slotDateTimes = [];
-            foreach ($busySlots as $slot) {
-                $slotDateTimes[$slot->pc_eid] = strtotime($slot->pc_startTime.' '.$slot->pc_eventDate);
+        $freeSlots = [];
+
+        $startDate = $param['dayInterval']['min'];
+        $timeStart = $param['scheduleStart'];
+        $timeEnd = $param['scheduleEnd'];
+        $calendarInterval = $param['calendarInterval'];
+        $dayInterval = floor(($param['dayInterval']['max'] - $param['dayInterval']['min']) / (60 * 60 * 24));
+
+        $day = 86400;    //  $day = 60*60*24;  1 day in seconds
+
+        for ($d = 0; $d <= $dayInterval; $d ++) {
+            $currentDay = date('Y/m/d', ($startDate + ($d * $day)));
+            $scheduleStart = strtotime($timeStart . ':00 ' .$currentDay);
+            $scheduleEnd = strtotime($timeEnd . ':00 ' . $currentDay);
+            for ($t = $scheduleStart; $t <= $scheduleEnd; $t += $calendarInterval) {
+
+//                    foreach ($busySlots as $k => $slot) {
+//                        $slotTimestamp = strtotime($slot->pc_startTime.' '.$slot->pc_eventDate);
+//                        $slotDay = date('Y/m/d', strtotime($slot->pc_eventDate));
+
+//                        if ($slotTimestamp >= $scheduleStart && $slotTimestamp <= $scheduleEnd && $slotDay == $currentDay) {
+//                            $allSlots[$currentDay][] = [
+//                                'timestamp' => date('Y/m/d H:i:s', $slotTimestamp),
+//                                'status'    => 'busy',
+//                                'duration'  =>  $slot->pc_duration/60 . ' minutes'
+//                            ];
+//                        } else {
+                $freeSlots[$currentDay][] = [
+                    'timestamp' => $t,
+                    'status'    => 'free',
+                    'duration'  =>  $calendarInterval
+                ];
+//                        }
+
+//                    }
+
+
             }
+        }
 
-            $startDate = $param['dayInterval']['min'];
-            $timeStart = $param['scheduleStart'];
-            $timeEnd = $param['scheduleEnd'];
-            $calendarInterval = $param['calendarInterval'];
-            $dayInterval = floor(($param['dayInterval']['max'] - $param['dayInterval']['min']) / (60 * 60 * 24));
+        return $freeSlots;
 
-            $day = 86400;    //  $day = 60*60*24;  1 day
+    }
 
-            for ($d = 1; $d <= $dayInterval; $d ++) {
-                $currentDay = date('d/m/Y', ($startDate + $d * $day));
-                $scheduleStart = strtotime($timeStart . ':00 ' .$currentDay);
-                $scheduleEnd = strtotime($timeEnd . ':00 ' . $currentDay);
-                for ($t = $scheduleStart; $t <= $scheduleEnd; $t += $calendarInterval) {
-                    if (in_array($t, $slotDateTimes)) {
-                        $allSlots[] = [
-                          'timestamp' => $t,
-                          'status'    => 'busy',
-                          'duration'  =>  $this->getSlotDuration($t, $slotDateTimes, $busySlots)
-                        ];
-                    } else {
-                        $allSlots[] = [
-                            'timestamp' => $t,
-                            'status'    => 'free',
-                            'duration'  =>  $calendarInterval/60 . ' minutes'
-                        ];
+
+    public function addBusySlots($freeSlots, $busySlots, $param)
+    {
+        foreach ($freeSlots as $ln) {
+            $foo = false;
+            foreach ($ln as $freeSlot) {
+                $foo = false;
+                // date('Y/m/d H:i:s', $t);
+                $freeSlotStart = $freeSlot['timestamp'];
+                $freeSlotEnd = $freeSlot['timestamp'] + $freeSlot['duration'];
+
+                foreach ($busySlots as $busySlot) {
+                    $foo = false;
+
+                    $slotTimestamp = strtotime($busySlot->pc_startTime.' '.$busySlot->pc_eventDate);
+                    $slotDay = date('Y/m/d', strtotime($busySlot->pc_eventDate));
+                    
+                    if ($slotTimestamp >= $freeSlotStart && $slotTimestamp <= $freeSlotEnd)
+                    {
+                           
                     }
                 }
             }
-
-            return $allSlots;
         }
     }
-
-
-    private function getSlotDuration($timestamp, $slotDateTimes, $busySlots)
-    {
-        $id = array_search($timestamp, $slotDateTimes);
-        $busySlots->filter(function ($data) use ($id) {
-            if ($data->pc_eid == $id) {
-                return $data->pc_startTime - $data->pc_endTime;
-            }
-        });
-    }
-
 
     public function getAppointmentsByParam($data)
     {
@@ -260,11 +280,13 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         }
     }
 
-    private function getDayInterval($busySlots)
+    private function getDayInterval($data)
     {
         $dates = [];
-        foreach ($busySlots as $slot) {
-            $dates [] = strtotime(substr($slot->pc_eventDate, 2));
+        foreach ($data as $ln) {
+            if (strlen($ln) > 3) {
+                $dates [] = strtotime(substr($ln, 2));
+            }
         }
         $dayInterval = [
             'min' => min($dates),
