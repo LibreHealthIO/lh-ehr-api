@@ -8,6 +8,7 @@
 
 namespace LibreEHR\Core\Emr\Repositories;
 
+use Carbon\Carbon;
 use LibreEHR\Core\Contracts\DocumentRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 use LibreEHR\Core\Contracts\AppointmentInterface;
@@ -90,78 +91,41 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     public function getSlots($data)
     {
-        $busySlots = DB::connection($this->connection)->table('libreehr_postcalendar_events')
+        $appointments = DB::connection($this->connection)->table('libreehr_postcalendar_events')
             ->where($this->provideSlotConditions($data))
             ->get();
 
-        $emrGlobals = $this->getGlobalSettings();
+        $availableSlots = [];
 
-        $param = array(
-            'scheduleStart' => $emrGlobals['schedule_start'],
-            'scheduleEnd' => $emrGlobals['schedule_end'],
-            'calendarInterval' => $emrGlobals['calendar_interval'] * 60,    // minutes to seconds
-            'dayInterval'  => $this->getDayInterval($busySlots)
-        );
+//            pcCategories:
+//
+//            1 => 'No Show',
+//            2 => 'In Office',
+//            3 => 'Out Of Office',
+//            4 => 'Vacation',
+//            5 => 'Office Visit',
+//            8 => 'Lunch',
+//            9 => 'Established Patient',
+//            10 => 'New Patient',
+//            11 => 'Reserved',
+//            12 => 'Health and Behavioral Assessment',
+//            13 => 'Preventive Care Services',
+//            14 => 'Ophthalmological Services'
 
-        $allSlots = $this->addFreeSlots($busySlots, $param);
-        
-        return $allSlots;
-    }
+        $availableSlotCategoties = [2, 5];
 
-    public function addFreeSlots($busySlots, $param)
-    {
-        if ($busySlots) {
-            $allSlots = [];
-            $slotDateTimes = [];
-            foreach ($busySlots as $slot) {
-                $slotDateTimes[$slot->pc_eid] = strtotime($slot->pc_startTime.' '.$slot->pc_eventDate);
+        foreach ($appointments as $slot) {
+            if (in_array($slot->pc_catid, $availableSlotCategoties)) {
+                $availableSlots[] = [
+                    'timestamp' => strtotime($slot->pc_eventDate . ' ' .$slot->pc_startTime),
+                    'status'    => 'available',
+                    'duration'  =>  $slot->pc_duration
+                ];
             }
-
-            $startDate = $param['dayInterval']['min'];
-            $timeStart = $param['scheduleStart'];
-            $timeEnd = $param['scheduleEnd'];
-            $calendarInterval = $param['calendarInterval'];
-            $dayInterval = floor(($param['dayInterval']['max'] - $param['dayInterval']['min']) / (60 * 60 * 24));
-
-            $day = 86400;    //  $day = 60*60*24;  1 day
-
-            for ($d = 1; $d <= $dayInterval; $d ++) {
-                $currentDay = date('d/m/Y', ($startDate + $d * $day));
-                $scheduleStart = strtotime($timeStart . ':00 ' .$currentDay);
-                $scheduleEnd = strtotime($timeEnd . ':00 ' . $currentDay);
-                for ($t = $scheduleStart; $t <= $scheduleEnd; $t += $calendarInterval) {
-                    if (in_array($t, $slotDateTimes)) {
-                        $allSlots[] = [
-                          'timestamp' => $t,
-                          'status'    => 'busy',
-                          'duration'  =>  $this->getSlotDuration($t, $slotDateTimes, $busySlots)
-                        ];
-                    } else {
-                        $allSlots[] = [
-                            'timestamp' => $t,
-                            'status'    => 'free',
-                            'duration'  =>  $calendarInterval/60 . ' minutes'
-                        ];
-                    }
-                }
-            }
-
-            return $allSlots;
         }
+        return $availableSlots;
     }
-
-
-    private function getSlotDuration($timestamp, $slotDateTimes, $busySlots)
-    {
-        $id = array_search($timestamp, $slotDateTimes);
-        $busySlots->filter(function ($data) use ($id) {
-            if ($data->pc_eid == $id) {
-                return $data->pc_startTime - $data->pc_endTime;
-            }
-        });
-    }
-
-
+    
     public function getAppointmentsByParam($data)
     {
         $conditions = [];
@@ -233,6 +197,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     private function provideSlotConditions($data)
     {
         $conditions = [];
+        $conditions[] = ['pc_aid', '=', $data['provider']];
         foreach($data as $k => $ln) {
             if (strpos($ln, 'le') !== false) {
                 $conditions[] = ['pc_eventDate', '<=', $this->getDate($ln, "lt")];
@@ -280,17 +245,25 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         }
     }
 
-    private function getDayInterval($busySlots)
+    private function getDayInterval($data)
     {
         $dates = [];
-        foreach ($busySlots as $slot) {
-            $dates [] = strtotime(substr($slot->pc_eventDate, 2));
+        foreach ($data as $ln) {
+            if (strlen($ln) > 3) {
+                $dates [] = strtotime(substr($ln, 2));
+            }
+            if (strpos("T", $ln) !== false) {
+                $dates [] = strtotime(str_replace("T"," ", $ln));
+            }
         }
-        $dayInterval = [
-            'min' => min($dates),
-            'max' => max($dates),
+        $from_date = date('Y-m-d', min($dates));
+        $to_date = date('Y-m-d', max($dates));
+        $datePeriod = [
+            'from_datetime' => strtotime( $from_date ." 00:00:00" ),
+            'to_datetime'   => strtotime( $to_date ." 23:59:59" )
         ];
-        return $dayInterval;
+
+        return $datePeriod;
     }
 
     private function getGlobalSettings()
@@ -306,10 +279,5 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             $emrGlobals[$global->gl_name] =$global->gl_value;
         }
         return $emrGlobals;
-    }
-
-    public function getGlobalCalendarInterval()
-    {
-        return $this->getGlobalSettings()['calendar_interval'];
     }
 }
