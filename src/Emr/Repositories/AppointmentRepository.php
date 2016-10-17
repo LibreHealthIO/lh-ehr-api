@@ -17,9 +17,17 @@ use Illuminate\Support\Facades\App;
 use LibreEHR\Core\Emr\Criteria\DocumentByPid;
 use LibreEHR\Core\Emr\Eloquent\AppointmentData as Appointment;
 use LibreEHR\Core\Emr\Finders\Finder;
+use LibreEHR\Core\Lib\Date\DateCalc;
 
 class AppointmentRepository extends AbstractRepository implements AppointmentRepositoryInterface
 {
+
+    const REPEAT_EVERY_DAY      = 0;
+    const REPEAT_EVERY_WEEK     = 1;
+    const REPEAT_EVERY_MONTH    = 2;
+    const REPEAT_EVERY_YEAR     = 3;
+    const REPEAT_EVERY_WORK_DAY = 4;
+
     public function model()
     {
         return '\LibreEHR\Core\Contracts\AppointmentInterface';
@@ -93,7 +101,8 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     {
         $appointments = DB::connection($this->connection)->table('libreehr_postcalendar_events')
             ->where($this->provideSlotConditions($data))
-            ->get();
+            ->get()
+            ->toArray();
 
         $availableSlots = [];
 
@@ -112,20 +121,160 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 //            13 => 'Preventive Care Services',
 //            14 => 'Ophthalmological Services'
 
+
+        $datePeriod = $this->getDayInterval($data);
+        $to_date = date('Y-m-d', $datePeriod['to_datetime']);
+        $from_date = date('Y-m-d', $datePeriod['from_datetime']);
+
         $availableSlotCategoties = [2, 5];
+
 
         foreach ($appointments as $slot) {
             if (in_array($slot->pc_catid, $availableSlotCategoties)) {
-                $availableSlots[] = [
-                    'timestamp' => strtotime($slot->pc_eventDate . ' ' .$slot->pc_startTime),
-                    'status'    => 'available',
-                    'duration'  =>  $slot->pc_duration
-                ];
+                $nextX = false;
+                if($nextX) {
+                    $stopDate = $slot->pc_endDate;
+                } else $stopDate = ($slot->pc_endDate <= $to_date) ? $slot->pc_endDate : $to_date;
+                ///////
+                $incX = 0;
+                
+                switch($slot->pc_recurrtype) {
+
+                    case '0' :
+
+                        $events2[] = $slot;
+
+                        break;
+
+                    case '1' :
+
+                        $event_recurrspec = @unserialize($slot->pc_recurrspec);
+
+                        $rfreq = $event_recurrspec['event_repeat_freq'];
+                        $rtype = $event_recurrspec['event_repeat_freq_type'];
+                        $exdate = $event_recurrspec['exdate'];
+
+                        list($ny,$nm,$nd) = explode('-', $slot->pc_eventDate);
+                        $occurance = $slot->pc_eventDate;
+
+                        while($occurance < $from_date) {
+                            $occurance =$this->increment($nd,$nm,$ny,$rfreq,$rtype);
+                            list($ny,$nm,$nd) = explode('-',$occurance);
+                        }
+
+                        while($occurance <= $stopDate) {
+
+                            $excluded = false;
+                            if (isset($exdate)) {
+                                foreach (explode(",", $exdate) as $exception) {
+                                    // occurrance format == yyyy-mm-dd
+                                    // exception format == yyyymmdd
+                                    if (preg_replace("/-/", "", $occurance) == $exception) {
+                                        $excluded = true;
+                                    }
+                                }
+                            }
+
+                            if ($excluded == false) {
+                                $slot->pc_eventDate = $occurance;
+                                $slot->pc_endDate = '0000-00-00';
+                                $events2[] = $slot;
+                                //////
+                                if ($nextX) {
+                                    ++$incX;
+                                    if($incX == $nextX) break;
+                                }
+                                //////
+                            }
+
+                            $occurance =$this->increment($nd,$nm,$ny,$rfreq,$rtype);
+                            list($ny,$nm,$nd) = explode('-',$occurance);
+
+                        }
+                        break;
+
+                    case '2' :
+
+                        $event_recurrspec = @unserialize($slot->pc_recurrspec);
+                        $rfreq = $event_recurrspec['event_repeat_on_freq'];
+                        $rnum  = $event_recurrspec['event_repeat_on_num'];
+                        $rday  = $event_recurrspec['event_repeat_on_day'];
+                        $exdate = $event_recurrspec['exdate'];
+
+                        list($ny,$nm,$nd) = explode('-', $slot->pc_eventDate);
+
+                        $occuranceYm = "$ny-$nm"; // YYYY-mm
+                        $from_dateYm = substr($from_date, 0, 7); // YYYY-mm
+                        $stopDateYm = substr($stopDate, 0, 7); // YYYY-mm
+
+                        // $nd will sometimes be 29, 30 or 31, and if used in mktime below, a problem
+                        // with overflow will occur ('01' should be plugged in to avoid this). We need
+                        // to mirror the calendar code which has this problem, so $nd has been used.
+                        while($occuranceYm < $from_dateYm) {
+                            $occuranceYmX = date('Y-m-d', mktime(0, 0, 0, $nm+$rfreq, $nd, $ny));
+                            list($ny,$nm,$nd) = explode('-', $occuranceYmX);
+                            $occuranceYm = "$ny-$nm";
+                        }
+
+                        while($occuranceYm <= $stopDateYm) {
+
+                            // (YYYY-mm)-dd
+                            $dnum = $rnum;
+                            $occurance = $slot->pc_eventDate;
+//                            do {
+//                                $occurance = DateCalc::NWeekdayOfMonth($dnum--,$rday,$nm,$ny,$format="%Y-%m-%d");
+//                            } while($occurance === -1);
+
+                            if($occurance >= $from_date && $occurance <= $stopDate) {
+
+                                $excluded = false;
+                                if (isset($exdate)) {
+                                    foreach (explode(",", $exdate) as $exception) {
+                                        // occurrance format == yyyy-mm-dd
+                                        // exception format == yyyymmdd
+                                        if (preg_replace("/-/", "", $occurance) == $exception) {
+                                            $excluded = true;
+                                        }
+                                    }
+                                }
+
+                                if ($excluded == false) {
+
+                                    $slot->pc_eventDate = $occurance;
+                                    $slot->pc_endDate = '0000-00-00';
+                                    $events2[] = $slot;
+                                    
+                                    if($nextX) {
+                                        ++$incX;
+                                        if($incX == $nextX) break;
+                                    }
+                                }
+
+                            }
+
+                            $occuranceYmX = date('Y-m-d',mktime(0,0,0,$nm+$rfreq,$nd,$ny));
+                            list($ny,$nm,$nd) = explode('-',$occuranceYmX);
+                            $occuranceYm = "$ny-$nm";
+
+                        }
+
+                        break;
+
+                }
             }
         }
+
+        foreach ($events2 as $event) {
+            $availableSlots[] = [
+                    'timestamp' => strtotime($event->pc_eventDate . ' ' .$event->pc_startTime),
+                    'status'    => 'available',
+                    'duration'  =>  $event->pc_duration
+                ];
+        }
+
         return $availableSlots;
     }
-    
+
     public function getAppointmentsByParam($data)
     {
         $conditions = [];
@@ -279,5 +428,56 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             $emrGlobals[$global->gl_name] =$global->gl_value;
         }
         return $emrGlobals;
+    }
+
+    private function increment($d,$m,$y,$f,$t)
+        {
+            if($t == self::REPEAT_EVERY_DAY) {
+                return date('Y-m-d',mktime(0,0,0,$m,($d+$f),$y));
+            } elseif($t == self::REPEAT_EVERY_WORK_DAY) {
+                // a workday is defined as Mon,Tue,Wed,Thu,Fri
+                // repeating on every or Nth work day means to not include
+                // weekends (Sat/Sun) in the increment... tricky
+
+                // ugh, a day-by-day loop seems necessary here, something where
+                // we can check to see if the day is a Sat/Sun and increment
+                // the frequency count so as to ignore the weekend. hmmmm....
+                $orig_freq = $f;
+                for ($daycount=1; $daycount<=$orig_freq; $daycount++) {
+                    $nextWorkDOW = date('w',mktime(0,0,0,$m,($d+$daycount),$y));
+                    if ($this->isWeekendDay($nextWorkDOW)) { $f++; }
+                }
+
+                // and finally make sure we haven't landed on a end week days
+                // adjust as necessary
+                $nextWorkDOW = date('w',mktime(0,0,0,$m,($d+$f),$y));
+                if (count($GLOBALS['weekend_days']) === 2){
+                    if ($nextWorkDOW == $GLOBALS['weekend_days'][0]) {
+                        $f+=2;
+                    }elseif($nextWorkDOW == $GLOBALS['weekend_days'][1]){
+                        $f++;
+                    }
+                } elseif(count($GLOBALS['weekend_days']) === 1 && $nextWorkDOW === $GLOBALS['weekend_days'][0]) {
+                    $f++;
+                }
+
+                return date('Y-m-d',mktime(0,0,0,$m,($d+$f),$y));
+
+            } elseif($t == self::REPEAT_EVERY_WEEK) {
+                return date('Y-m-d',mktime(0,0,0,$m,($d+(7*$f)),$y));
+            } elseif($t == self::REPEAT_EVERY_MONTH) {
+                return date('Y-m-d',mktime(0,0,0,($m+$f),$d,$y));
+            } elseif($t == self::REPEAT_EVERY_YEAR) {
+                return date('Y-m-d',mktime(0,0,0,$m,$d,($y+$f)));
+            }
+        }
+
+    private function isWeekendDay($day){
+
+        if (in_array($day, $GLOBALS['weekend_days'])) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
