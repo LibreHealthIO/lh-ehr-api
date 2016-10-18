@@ -201,6 +201,17 @@ class PatientData extends Model implements PatientInterface
         $this->county = $county;
         return $this;
     }
+    
+    public function getCustomerID()
+    {
+        return $this->usertext8;
+    }
+    public function setCustomerID($customerID)
+    {
+        $this->usertext8 = $customerID;
+        return $this;
+    }
+
 
     private function streetsToLine($addressLines)
     {
