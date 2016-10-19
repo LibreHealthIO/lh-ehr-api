@@ -212,6 +212,26 @@ class PatientData extends Model implements PatientInterface
         return $this;
     }
 
+    public function getContactRelationship()
+    {
+        return $this->contact_relationship;
+    }
+    public function setContactRelationship($contactRelationship)
+    {
+        $this->contact_relationship = $contactRelationship;
+        return $this;
+    }
+
+    public function getContactRelationshipPhone()
+    {
+        return $this->phone_cell;
+    }
+    public function setContactRelationshipPhone($phone)
+    {
+        $this->phone_cell = $phone;
+        return $this;
+    }
+
 
     private function streetsToLine($addressLines)
     {
