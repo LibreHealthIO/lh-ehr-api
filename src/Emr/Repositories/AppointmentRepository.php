@@ -325,7 +325,13 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             }
 
         } else {
-            $conditions[] = ['pc_pid', '=', $data['patient']];
+            $status = DB::connection($this->connection)->table('patient_data')
+                ->where('pid', '=', $data['patient'])->value('reg_status');
+            if ($status == 'deleted') {
+                $conditions[] = ['pc_pid', '!=', $data['patient']];
+            } else {
+                $conditions[] = ['pc_pid', '=', $data['patient']];
+            }
         }
 
         foreach($data as $k => $ln) {
