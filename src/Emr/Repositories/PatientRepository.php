@@ -43,6 +43,7 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
         $conditions = [];
         if ( isset($data['groupId']) ) {
             $conditions[] = ['group_id', '=', $data['groupId']];
+            $conditions[] = ['reg_status', '!=', 'deleted'];
         }
         $model = $this->makeModel();
         return $model->where($conditions)->get();
@@ -125,7 +126,7 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
     {
         return DB::connection($this->connection)->table('patient_data')
             ->where( 'pid', '=', $id )
-            ->delete();
+            ->update(['reg_status' => 'deleted']);
     }
 
 }
