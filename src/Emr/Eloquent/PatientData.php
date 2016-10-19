@@ -208,7 +208,7 @@ class PatientData extends Model implements PatientInterface
     }
     public function setCustomerID($customerID)
     {
-        $this->usertext8 = $customerID;
+        $this->usertext7 = $customerID;
         return $this;
     }
 
@@ -218,20 +218,10 @@ class PatientData extends Model implements PatientInterface
     }
     public function setContactRelationship($contactRelationship)
     {
-        $this->contact_relationship = $contactRelationship;
+        $this->usertext7 = $contactRelationship;
         return $this;
     }
-
-    public function getContactRelationshipPhone()
-    {
-        return $this->phone_cell;
-    }
-    public function setContactRelationshipPhone($phone)
-    {
-        $this->phone_cell = $phone;
-        return $this;
-    }
-
+    
 
     private function streetsToLine($addressLines)
     {
