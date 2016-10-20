@@ -214,11 +214,11 @@ class PatientData extends Model implements PatientInterface
 
     public function getContactRelationship()
     {
-        return $this->contact_relationship;
+        return $this->guardianrelationship;
     }
     public function setContactRelationship($contactRelationship)
     {
-        $this->usertext7 = $contactRelationship;
+        $this->guardianrelationship = $contactRelationship;
         return $this;
     }
     
