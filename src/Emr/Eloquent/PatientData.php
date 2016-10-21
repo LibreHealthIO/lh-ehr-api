@@ -147,6 +147,17 @@ class PatientData extends Model implements PatientInterface
         return $this;
     }
 
+    public function getRelationship()
+    {
+        return $this->usertext7;
+    }
+
+    public function setRelationship( $relationship )
+    {
+        $this->usertext7 = $relationship;
+        return $this;
+    }
+
     public function getStatus()
     {
         return $this->reg_status;

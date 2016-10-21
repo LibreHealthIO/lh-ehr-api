@@ -42,4 +42,7 @@ interface PatientInterface extends ModelInterface
 
     public function getCustomerID();
     public function setCustomerID($customerID);
+
+    public function getRelationship();
+    public function setRelationship( $relationship );
 }
