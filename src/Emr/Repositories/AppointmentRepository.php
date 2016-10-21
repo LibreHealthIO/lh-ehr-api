@@ -385,7 +385,9 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     private function provideSlotConditions($data)
     {
         $conditions = [];
-        $conditions[] = ['pc_aid', '=', $data['provider']];
+        $providerRepo = new ProviderRepository();
+        $provider = $providerRepo->get($data['provider']);
+        $conditions[] = ['pc_aid', '=', $provider->getEmrId()];
         foreach($data as $k => $ln) {
             if (strpos($ln, 'le') !== false) {
                 $conditions[] = ['pc_eventDate', '<=', $this->getDate($ln, "lt")];
