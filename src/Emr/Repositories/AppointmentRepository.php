@@ -141,7 +141,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
                     while ($occurance <= $stopDate) {
                         $excluded = false;
-                        if (isset($exdate)) {
+                        if (!empty($exdate)) {
                             foreach (explode(",", $exdate) as $exception) {
                                 // occurrance format == yyyy-mm-dd
                                 // exception format == yyyymmdd
@@ -154,7 +154,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                         if ($excluded == false) {
                             $slot->pc_eventDate = $occurance;
                             $slot->pc_endDate = '0000-00-00';
-                            $events2[] = $slot;
+                            $events2[] = clone $slot;
                             //////
                             if ($nextX) {
                                 ++$incX;
@@ -211,7 +211,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                             if ($excluded == false) {
                                 $slot->pc_eventDate = $occurance;
                                 $slot->pc_endDate = '0000-00-00';
-                                $events2[] = $slot;
+                                $events2[] = clone $slot;
 
                                 if ($nextX) {
                                     ++$incX;
@@ -257,6 +257,10 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     private function getAvailableSlots($appointments)
     {
+        usort($appointments, function ($a, $b) {
+            return strtotime($a->pc_eventDate) - strtotime($b->pc_eventDate);
+        });
+
         $availableSlots = array();
         $start_time = 0;
         $date = 0;
