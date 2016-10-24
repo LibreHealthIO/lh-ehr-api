@@ -233,23 +233,28 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             }
         }
 
+        $freeSlots = array();
         foreach ($events2 as $event) {
-            $busySlots[] = [
-                'timestamp' => strtotime($event->pc_eventDate . ' ' .$event->pc_startTime),
-                'status'    => 'available',
-                'duration'  =>  $event->pc_duration
-            ];
-        }
-
-        $freeSlots = $this->getAvailableSlots($events2);
-
-        foreach ($freeSlots as $k => $freeSlot) {
-            foreach ($busySlots as $busySlot) {
-                if ($freeSlot['timestamp'] == $busySlot['timestamp']) {
-                    $freeSlots[$k]['status'] = 'busy';
+            if ( $event->pc_catid == 2 ) {
+                for ( $i = 0; $i < $event->pc_duration; $i += 900  ) { // TODO get global slot value
+                    $freeSlots[] = [
+                        'timestamp' => strtotime($event->pc_eventDate . ' ' . $event->pc_startTime + $i),
+                        'status' => 'available',
+                        'duration' => 900 // $event->pc_duration
+                    ];
                 }
             }
         }
+
+//        $freeSlots = $this->getAvailableSlots($events2);
+//
+//        foreach ($freeSlots as $k => $freeSlot) {
+//            foreach ($busySlots as $busySlot) {
+//                if ($freeSlot['timestamp'] == $busySlot['timestamp']) {
+//                    $freeSlots[$k]['status'] = 'busy';
+//                }
+//            }
+//        }
 
         return $freeSlots;
     }
