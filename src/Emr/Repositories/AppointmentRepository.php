@@ -238,7 +238,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             if ( $event->pc_catid == 2 ) {
                 for ( $i = 0; $i < $event->pc_duration; $i += 900  ) { // TODO get global slot value
                     $freeSlots[] = [
-                        'timestamp' => strtotime($event->pc_eventDate . ' ' . $event->pc_startTime + $i),
+                        'timestamp' => strtotime($event->pc_eventDate . ' ' . $event->pc_startTime ) + $i,
                         'status' => 'available',
                         'duration' => 900 // $event->pc_duration
                     ];
