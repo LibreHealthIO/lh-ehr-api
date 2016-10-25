@@ -38,6 +38,12 @@ class ProviderRepository extends AbstractRepository implements ProviderRepositor
         return $providerInterface;
     }
 
+    public function findByEmrId( $emr_id )
+    {
+        $patient = $this->makeModel();
+        return $patient->where('emr_id', $emr_id)->first();
+    }
+
     public function update($id, array $data)
     {
     }
