@@ -102,7 +102,7 @@ class AppointmentData extends Model implements AppointmentInterface
 
     public function getEndTime()
     {
-        return strtotime($this->getPcEventDate() . ' ' . $this->pc_endTime);
+        return strtotime($this->getPcEndDate() . ' ' . $this->pc_endTime);
     }
 
     public function setEndTime( $endTime )
