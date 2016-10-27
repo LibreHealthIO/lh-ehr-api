@@ -233,83 +233,55 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             }
         }
 
-        $freeSlots = array();
-        foreach ($events2 as $event) {
-            if ( $event->pc_catid == 2 ) {
-                for ( $i = 0; $i < $event->pc_duration; $i += 900  ) { // TODO get global slot value
-                    $freeSlots[] = [
-                        'timestamp' => strtotime($event->pc_eventDate . ' ' . $event->pc_startTime ) + $i,
-                        'status' => 'available',
-                        'duration' => 900 // $event->pc_duration
-                    ];
-                }
-            }
-        }
-
-//        $freeSlots = $this->getAvailableSlots($events2);
-//
-//        foreach ($freeSlots as $k => $freeSlot) {
-//            foreach ($busySlots as $busySlot) {
-//                if ($freeSlot['timestamp'] == $busySlot['timestamp']) {
-//                    $freeSlots[$k]['status'] = 'busy';
-//                }
-//            }
-//        }
-
-        return $freeSlots;
-    }
-
-
-    private function getAvailableSlots($appointments)
-    {
-        usort($appointments, function ($a, $b) {
+        usort($events2, function ($a, $b) {
             return strtotime($a->pc_eventDate) - strtotime($b->pc_eventDate);
         });
 
+        // Break down all events into slots
         $availableSlots = array();
-        $start_time = 0;
-        $date = 0;
-        for ($i = 0; $i < count($appointments); ++$i)
-        {
-            if ($appointments[$i]->pc_catid == 2) { // 2 == In Office
-                $start_time = $appointments[$i]->pc_startTime;
-                $date = $appointments[$i]->pc_eventDate;
-                $provider_id = $appointments[$i]->pc_aid;
-            } else if ($appointments[$i]->pc_catid == 3) { // 3 == Out Of Office
-                continue;
-            } else {
-                $start_time = $appointments[$i]->pc_endTime;
-                $date = $appointments[$i]->pc_eventDate;
-                $provider_id = $appointments[$i]->pc_aid;
-            }
+        $otherEvents = $events2;
+        foreach ( $events2 as $event ) {
+            if ( $event->pc_catid == 2 ) { // In Office
 
-            // find next appointment with the same provider
-            $next_appointment_date = 0;
-            $next_appointment_time = 0;
-            for ($j = $i+1; $j < count($appointments); ++$j) {
-                if ($appointments[$j]->pc_aid == $provider_id) {
-                    $next_appointment_date = $appointments[$j]->pc_eventDate;
-                    $next_appointment_time = $appointments[$j]->pc_startTime;
-                    break;
-                }
-            }
+                // Start the slot counter at the start of the event
+                $slotStartTime = strtotime( $event->pc_eventDate . ' ' . $event->pc_startTime );
+                $slotEndTime = $slotStartTime + $this->getGlobalCalendarInterval()*60;
+                $endDate = $event->pc_endDate == '0000-00-00' ? $event->pc_eventDate : $event->pc_endDate;
+                $endTime = strtotime( $endDate . ' ' . $event->pc_endTime );
 
-            $same_day = (strtotime($next_appointment_date) == strtotime($date)) ? true : false;
+                // Iterate over this in-office slot in increments of Slot Duration until we reach the Event duration,
+                // OR the end of the in-office event
+                for ( $i = 0; ( $i < $event->pc_duration && $i < $endTime ); $i += $this->getGlobalCalendarInterval()*60  ) {
 
-            if ($next_appointment_time && $same_day) {
-                // check the start time of the next appointment
-                $start_datetime = strtotime($date." ".$start_time);
-                $next_appointment_datetime = strtotime($next_appointment_date." ".$next_appointment_time);
-                $curr_time = $start_datetime;
-                while ($curr_time < $next_appointment_datetime - ($this->getGlobalSettings()['calendar_interval'] / 2)) {
-                    //create a new appointment ever 15 minutes
-                    $availableSlots []= [
-                        'timestamp' => $curr_time,
-                        'status'    => 'available',
-                        'duration'  =>  $this->getGlobalSettings()['calendar_interval']
+                    $isAvailable = true;
 
-                    ];
-                    $curr_time += $this->getGlobalSettings()['calendar_interval'] * 60; // add a 15-minute slot
+                    // Search for a blocked-out time that would make this slot unavailable
+                    foreach ( $otherEvents as $otherEvent ) {
+                        if ( ( $otherEvent->pc_apptstatus == '*' ||
+                            $otherEvent->pc_apptstatus == '=' ) ) {
+
+                            $otherStartTime = strtotime( $otherEvent->pc_eventDate . ' ' . $otherEvent->pc_startTime );
+                            $endDate = $otherEvent->pc_endDate == '0000-00-00' ? $otherEvent->pc_eventDate : $otherEvent->pc_endDate;
+                            $otherEndTime = strtotime( $endDate . ' ' . $otherEvent->pc_endTime );
+                            if ( $otherStartTime < $slotEndTime &&
+                                $otherEndTime > $slotStartTime ) {
+                                $isAvailable = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ( $isAvailable ) {
+                        $availableSlots[] = [
+                            'timestamp' => $slotStartTime,
+                            'duration' => $this->getGlobalCalendarInterval() * 60, // $event->pc_duration
+                            'status' => 'available',
+                        ];
+                    }
+
+                    // Move the slot start and end times
+                    $slotStartTime += $this->getGlobalCalendarInterval() * 60;
+                    $slotEndTime += $this->getGlobalCalendarInterval() * 60;
                 }
             }
         }
