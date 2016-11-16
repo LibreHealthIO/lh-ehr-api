@@ -97,22 +97,85 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         return $appointmentInterface;
     }
 
-    public function getSlots($data)
+    protected function checkConstraints( $slotStartTime, $slotEndTime, $constraints )
     {
-        $appointments = DB::connection($this->connection)->table('libreehr_postcalendar_events')
-            ->where($this->provideSlotConditions($data))
-            ->get()
-            ->toArray();
+        $pass = true;
+        foreach ( $constraints as $constraint ) {
+            $constraintTimestamp = strtotime($constraint[2]);
+            $constraintOperator = $constraint[1];
 
-        $busySlots = [];
+            // slot must start before constraint timestamp
+            if ($constraintOperator == '<=' &&
+                $slotStartTime > $constraintTimestamp ) {
+                $pass = false;
+                break;
+            } else if ($constraintOperator == '<' &&
+                $slotStartTime >= $constraintTimestamp ) {
+                $pass = false;
+                break;
+            } else if ($constraintOperator == '>=' &&
+                $slotStartTime < $constraintTimestamp ) {
+                $pass = false;
+                break;
+            } else if ($constraintOperator == '>' &&
+                $slotStartTime <= $constraintTimestamp ) {
+                $pass = false;
+                break;
+            }
+        }
 
-        $datePeriod = $this->getDayInterval($data);
-        $to_date = date('Y-m-d', $datePeriod['to_datetime']);
-        $from_date = date('Y-m-d', $datePeriod['from_datetime']);
+        return $pass;
+    }
+
+    public function findSmallest( $constraints )
+    {
+        $min = null;
+        foreach ( $constraints as $key => $constraint ) {
+            if ( $key == 'gt' || $key == 'ge' ) {
+                $min = substr( $constraint[2], 0, 10 );
+                break;
+            }
+        }
+
+        return $min;
+    }
+
+    public function findBiggest( $constraints )
+    {
+        $max = null;
+        foreach ( $constraints as $key => $constraint ) {
+            if ( $key == 'lt' || $key == 'le' ) {
+                $max = substr( $constraint[2], 0, 10 );
+                break;
+            }
+        }
+
+        return $max;
+    }
+
+    public function getSlots( $data )
+    {
+        $constraints = $this->provideSlotConditions( $data );
+        $from_date = $this->findSmallest( $constraints );
+        $to_date = $this->findBiggest( $constraints );
+
+        $allEvents = DB::connection($this->connection)->table( 'libreehr_postcalendar_events' );
+//        if ( $constraints['pc_aid'] ) {
+//            $allEvents->where(   );
+//        }
+        $allEvents->where([
+            [ 'pc_aid', '=', $constraints['pc_aid'][2] ],
+            [ 'pc_endDate', '>=', $from_date ],
+            [ 'pc_eventDate', '<=', $to_date ],
+            [ 'pc_recurrtype', '>', 0 ] ]);
+        $allEvents->orWhere([
+            [ 'pc_eventDate', '>=', $from_date ],
+            [ 'pc_eventDate', '<=', $to_date ] ]);
+        $allEvents = $allEvents->get()->toArray();
 
         $events2 = [];
 
-        foreach ($appointments as $slot) {
+        foreach ( $allEvents as $slot ) {
             $nextX = false;
             if($nextX) {
                 $stopDate = $slot->pc_endDate;
@@ -255,26 +318,34 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
                     $isAvailable = true;
 
-                    // Search for a blocked-out time that would make this slot unavailable
-                    foreach ( $otherEvents as $otherEvent ) {
-                        if ( ( $otherEvent->pc_apptstatus == '*' ||
-                            $otherEvent->pc_apptstatus == '=' ) ) {
+                    if ( !$this->checkConstraints( $slotStartTime, $slotEndTime, $constraints ) ) {
+                        $isAvailable = false;
+                    }
 
-                            $otherStartTime = strtotime( $otherEvent->pc_eventDate . ' ' . $otherEvent->pc_startTime );
-                            $endDate = $otherEvent->pc_endDate == '0000-00-00' ? $otherEvent->pc_eventDate : $otherEvent->pc_endDate;
-                            $otherEndTime = strtotime( $endDate . ' ' . $otherEvent->pc_endTime );
-                            if ( $otherStartTime < $slotEndTime &&
-                                $otherEndTime > $slotStartTime ) {
-                                $isAvailable = false;
-                                break;
+                    if ( $isAvailable ) {
+                        // Search for a blocked-out time that would make this slot unavailable
+                        foreach ($otherEvents as $otherEvent) {
+                            if (($otherEvent->pc_apptstatus == '*' ||
+                                $otherEvent->pc_apptstatus == '=')
+                            ) {
+
+                                $otherStartTime = strtotime($otherEvent->pc_eventDate . ' ' . $otherEvent->pc_startTime);
+                                $endDate = $otherEvent->pc_endDate == '0000-00-00' ? $otherEvent->pc_eventDate : $otherEvent->pc_endDate;
+                                $otherEndTime = strtotime($endDate . ' ' . $otherEvent->pc_endTime);
+                                if ($otherStartTime < $slotEndTime &&
+                                    $otherEndTime > $slotStartTime
+                                ) {
+                                    $isAvailable = false;
+                                    break;
+                                }
                             }
                         }
                     }
 
                     if ( $isAvailable ) {
                         $availableSlots[] = [
-                            'timestamp' => $slotStartTime,
-                            'duration' => $this->getGlobalCalendarInterval() * 60, // $event->pc_duration
+                            'startTimestamp' => $slotStartTime,
+                            'endTimestamp' => $slotEndTime,
                             'status' => 'available',
                         ];
                     }
@@ -314,6 +385,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                 $conditions[] = ['pc_pid', '=', $data['patient']];
             }
         }
+
 
         foreach($data as $k => $ln) {
             if (strpos($ln, 'le') !== false) {
@@ -368,45 +440,41 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         $conditions = [];
         $providerRepo = new ProviderRepository();
         $provider = $providerRepo->get($data['provider']);
-        $conditions[] = ['pc_aid', '=', $provider->getEmrId()];
+        $conditions['pc_aid'] = ['pc_aid', '=', $provider->getEmrId()];
+
+        $conditionTemplate = 'CONCAT(pc_eventDate,\' \',pc_startTime)';
+
         foreach($data as $k => $ln) {
             if (strpos($ln, 'le') !== false) {
-                $conditions[] = ['pc_eventDate', '<=', $this->getDate($ln, "lt")];
+                $conditions['le'] = [ $conditionTemplate, '<=', $this->getDate( $ln ) ];
             }
             if (strpos($ln, 'ge') !== false) {
-                $conditions[] = ['pc_eventDate', '>=', $this->getDate($ln, "gt")];
+                $conditions['ge'] = [ $conditionTemplate, '>=', $this->getDate( $ln ) ];
             }
             if (strpos($ln, 'eq') !== false) {
-                $conditions[] = ['pc_eventDate', '=', $this->getDate($ln, "eq")];
+                $conditions['eq'] = [ $conditionTemplate, '=', $this->getDate( $ln ) ];
             }
             if (strpos($ln, 'ne') !== false) {
-                $conditions[] = ['pc_eventDate', '!=', $this->getDate($ln, "ne")];
+                $conditions['ne'] = [ $conditionTemplate, '!=', $this->getDate( $ln ) ];
             }
             if (strpos($ln, 'gt') !== false) {
-                $conditions[] = ['pc_eventDate', '>=', $this->getDate($ln, "gt")];
-                if ($this->getTime($ln)) {
-                    $conditions[] = ['pc_startTime', '>', $this->getTime($ln)];
-                }
+                $conditions['gt'] = [ $conditionTemplate, '>', $this->getDate( $ln ) ];
             }
             if (strpos($ln, 'lt') !== false) {
-                $conditions[] = ['pc_eventDate', '<=', $this->getDate($ln, "lt")];
-                if ($this->getTime($ln)) {
-                    $conditions[] = ['pc_startTime', '<', $this->getTime($ln)];
-                }
+                $conditions['lt'] = [ $conditionTemplate, '<', $this->getDate( $ln ) ];
             }
             if (strpos($k, 'startDate') !== false) {
-                $conditions[] = ['pc_eventDate', '=', $ln];
+                $conditions['startDate'] = ['pc_eventDate', '=', $ln];
             }
         }
         return $conditions;
     }
 
-    private function getDate($ln, $param)
+    private function getDate( $ln )
     {
-        if(strpos($ln, 'T') !== false){
-            $ln = substr($ln, 0, strpos($ln, 'T'));
-        }
-        return substr($ln, strpos($ln, $param) + 2);
+        $datetime = str_replace( '%3A', ':', $ln );
+        $datetime = str_replace( 'T', ' ', $datetime );
+        return substr( $datetime, 2 );
     }
 
     private function getTime($string)
@@ -416,26 +484,6 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         }
     }
 
-    private function getDayInterval($data)
-    {
-        $dates = [];
-        foreach ($data as $ln) {
-            if (strlen($ln) > 3) {
-                $dates [] = strtotime(substr($ln, 2));
-            }
-            if (strpos("T", $ln) !== false) {
-                $dates [] = strtotime(str_replace("T"," ", $ln));
-            }
-        }
-        $from_date = date('Y-m-d', min($dates));
-        $to_date = date('Y-m-d', max($dates));
-        $datePeriod = [
-            'from_datetime' => strtotime( $from_date ." 00:00:00" ),
-            'to_datetime'   => strtotime( $to_date ." 23:59:59" )
-        ];
-
-        return $datePeriod;
-    }
 
     private function getGlobalSettings()
     {
