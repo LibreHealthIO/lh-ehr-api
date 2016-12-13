@@ -59,7 +59,7 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
                 // because though it's not the primary key, it must be unique.
                 // This subquery increments the pid from the max in the table
                 $subquery = DB::connection($this->connection)->table((new Patient)->getTable() . ' as PD')
-                    ->selectRaw('pid + 1 as new_pid')
+                    ->selectRaw('IF ( COUNT(pid), pid + 1, 1 ) as new_pid')
                     ->orderBy('pid', 'desc')
                     ->take(1)->toSql();
 
