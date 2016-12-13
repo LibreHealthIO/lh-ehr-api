@@ -45,14 +45,4 @@ class PharmacyRepository extends AbstractRepository implements PharmacyRepositor
     public function delete($id)
     {
     }
-
-    public function fetchAll()
-    {
-        return Pharmacy::all();
-    }
-
-    public function get($id)
-    {
-        return Pharmacy::find($id);
-    }
 }

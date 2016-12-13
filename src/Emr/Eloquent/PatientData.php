@@ -138,12 +138,34 @@ class PatientData extends Model implements PatientInterface
 
     public function getPharmacyId()
     {
-        return $this->pharmacy_id;
+        return $this->pharmacy_api_id;
     }
 
     public function setPharmacyId( $pharmacyId )
     {
-        $this->pharmacy_id = $pharmacyId;
+        $this->pharmacy_api_id = $pharmacyId;
+        return $this;
+    }
+
+    public function getPharmacyName()
+    {
+        return $this->pharmacy_name;
+    }
+
+    public function setPharmacyName( $pharmacyName )
+    {
+        $this->pharmacy_name = $pharmacyName;
+        return $this;
+    }
+
+    public function getPharmacyAddress()
+    {
+        return $this->pharmacy_address;
+    }
+
+    public function setPharmacyAddress( $pharmacyAddress )
+    {
+        $this->pharmacy_address = $pharmacyAddress;
         return $this;
     }
 
