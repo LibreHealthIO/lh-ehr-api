@@ -28,6 +28,8 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     const REPEAT_EVERY_YEAR     = 3;
     const REPEAT_EVERY_WORK_DAY = 4;
 
+    protected $weekend_days = [ 'Sat', 'Sun' ];
+
     public function model()
     {
         return '\LibreEHR\Core\Contracts\AppointmentInterface';
@@ -438,10 +440,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     private function provideSlotConditions($data)
     {
         $conditions = [];
-        $providerRepo = new ProviderRepository();
-        $provider = $providerRepo->get($data['provider']);
-        $conditions['pc_aid'] = ['pc_aid', '=', $provider->getEmrId()];
-
+        $conditions['pc_aid'] = ['pc_aid', '=', $data['provider']];
         $conditionTemplate = 'CONCAT(pc_eventDate,\' \',pc_startTime)';
 
         foreach($data as $k => $ln) {
@@ -525,13 +524,13 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             // and finally make sure we haven't landed on a end week days
             // adjust as necessary
             $nextWorkDOW = date('w',mktime(0,0,0,$m,($d+$f),$y));
-            if (count($GLOBALS['weekend_days']) === 2){
-                if ($nextWorkDOW == $GLOBALS['weekend_days'][0]) {
+            if (count($this->weekend_days) === 2){
+                if ($nextWorkDOW == $this->weekend_days[0]) {
                     $f+=2;
-                }elseif($nextWorkDOW == $GLOBALS['weekend_days'][1]){
+                }elseif($nextWorkDOW == $this->weekend_days[1]){
                     $f++;
                 }
-            } elseif(count($GLOBALS['weekend_days']) === 1 && $nextWorkDOW === $GLOBALS['weekend_days'][0]) {
+            } elseif(count($this->weekend_days) === 1 && $nextWorkDOW === $this->weekend_days[0]) {
                 $f++;
             }
 
@@ -548,7 +547,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     private function isWeekendDay($day){
 
-        if (in_array($day, $GLOBALS['weekend_days'])) {
+        if (in_array($day, $this->weekend_days)) {
             return true;
         } else {
             return false;

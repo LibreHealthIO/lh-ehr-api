@@ -131,6 +131,7 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
             ->first();
         $patientInterface->setId( $patient->id );
         $patientInterface->exists = true;
+        $patientInterface->setConnection( $this->connection );
         $patientInterface->save();
         return $patientInterface;
     }
