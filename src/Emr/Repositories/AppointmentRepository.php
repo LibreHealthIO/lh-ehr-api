@@ -305,18 +305,38 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         // Break down all events into slots
         $availableSlots = array();
         $otherEvents = $events2;
-        foreach ( $events2 as $event ) {
+        for ( $i = 0; $i < count( $events2 ); $i++ ) {
+            $event = $events2[$i];
             if ( $event->pc_catid == 2 ) { // In Office
 
                 // Start the slot counter at the start of the event
                 $slotStartTime = strtotime( $event->pc_eventDate . ' ' . $event->pc_startTime );
                 $slotEndTime = $slotStartTime + $this->getGlobalCalendarInterval()*60;
-                $endDate = $event->pc_endDate == '0000-00-00' ? $event->pc_eventDate : $event->pc_endDate;
-                $endTime = strtotime( $endDate . ' ' . $event->pc_endTime );
+
+                $endDate = null;
+                $endTime = null;
+                $duration = null;
+                // Find the next out-of-offiece event if the in-office event doesn't have a duration
+                if ( $event->pc_duration ) {
+                    $endDate = $event->pc_endDate == '0000-00-00' ? $event->pc_eventDate : $event->pc_endDate;
+                    $endTime = strtotime($endDate . ' ' . $event->pc_endTime);
+                    $duration = $event->pc_duration;
+                } else {
+                    $eventSearchOut = $events2;
+                    for ( $iSearch = $i; $iSearch < count($eventSearchOut); $iSearch++ ) {
+                        $searchOutEvent = $eventSearchOut[$iSearch];
+                        if ( $searchOutEvent->pc_catid == 3 ) { // OUt of office
+                            $endDate = $searchOutEvent->pc_eventDate;
+                            $endTime = strtotime($endDate . ' ' . $searchOutEvent->pc_startTime);
+                            $duration = ( $endTime - $slotStartTime );
+                            break;
+                        }
+                    }
+                }
 
                 // Iterate over this in-office slot in increments of Slot Duration until we reach the Event duration,
                 // OR the end of the in-office event
-                for ( $i = 0; ( $i < $event->pc_duration && $i < $endTime ); $i += $this->getGlobalCalendarInterval()*60  ) {
+                for ( $i = 0; ( $i < $duration && $i < $endTime ); $i += $this->getGlobalCalendarInterval()*60  ) {
 
                     $isAvailable = true;
 
@@ -327,8 +347,11 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                     if ( $isAvailable ) {
                         // Search for a blocked-out time that would make this slot unavailable
                         foreach ($otherEvents as $otherEvent) {
-                            if (($otherEvent->pc_apptstatus == '*' ||
-                                $otherEvent->pc_apptstatus == '=')
+                            if ($otherEvent->pc_apptstatus == '*' ||
+                                $otherEvent->pc_apptstatus == '=' ||
+                                $otherEvent->pc_catid == 8 ||
+                                $otherEvent->pc_catid == 4 ||
+                                $otherEvent->pc_catid == 11
                             ) {
 
                                 $otherStartTime = strtotime($otherEvent->pc_eventDate . ' ' . $otherEvent->pc_startTime);
