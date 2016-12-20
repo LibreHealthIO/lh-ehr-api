@@ -41,9 +41,9 @@ class ProviderRepository extends AbstractRepository implements ProviderRepositor
     public function findByEmrIdAndConnection( $emr_id, $connection )
     {
         $provider = $this->makeModel();
-        return $provider->where(
+        return $provider->where([
             [ 'emr_id', '=', $emr_id ],
-            ['connection_key', '=', $connection ])->first();
+            ['connection_key', '=', $connection ]])->first();
     }
 
     public function update($id, array $data)

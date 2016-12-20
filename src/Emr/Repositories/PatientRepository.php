@@ -35,7 +35,15 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
         //return DB::connection($this->connection)->table('patient_data')->where( 'pid', $pid )->first();
 
         $patient = $this->makeModel();
+        $patient->setConnection( $this->connection );
         return $patient->where('pid', $pid)->first();
+    }
+
+    public function get( $id )
+    {
+        $patient = $this->makeModel();
+        $patient->setConnection( $this->connection );
+        return $patient->where('id', $id)->first();
     }
 
     public function getPatientsByParam( $data )
@@ -68,14 +76,19 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
                 $patientInterface->setAttribute( 'pubpid', $pid  );
             }
 
+            $patientInterface->setConnectionName( $this->connection );
+            $patientInterface->setConnection( $this->connection );
             $patientInterface->save();
-            $patientInterface = $this->get( $patientInterface->id );
+            $patientInterface->setConnectionName( $this->connection );
+            $patientInterface->setConnection( $this->connection );
+            $newId = $patientInterface->getId();
+            $returnedPI = $this->get( $newId );
 
             if ( $photo ) {
                 // TODO use document Repository to get the path from some config
                 $docpath = "/Users/kchapple/Dev/www/openemr_github/sites/default/documents";
-                mkdir($docpath . "/" . $patientInterface->getPid());
-                $filepath = $docpath . "/" . $patientInterface->getPid() . "/" . $photo->filename;
+                mkdir($docpath . "/" . $returnedPI->getPid());
+                $filepath = $docpath . "/" . $returnedPI->getPid() . "/" . $photo->filename;
                 $ifp = fopen($filepath, "wb");
                 fwrite($ifp, base64_decode($photo->base64Data));
                 fclose($ifp);
@@ -84,14 +97,14 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
                 $photo->setType('file_url');
                 $photo->setUrl("file://$filepath");
                 $photo->setDate(date('Y-m-d'));
-                $photo->setForeignId($patientInterface->getPid());
+                $photo->setForeignId($returnedPI->getPid());
                 $photo->addCategory(10); // 10 === 'Patient Photograph'
 
                 $documentRepo->create($photo);
             }
         }
 
-        return $patientInterface;
+        return $returnedPI;
     }
 
     public function onAfterFind( $entity )

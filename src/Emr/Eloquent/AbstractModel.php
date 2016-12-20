@@ -8,11 +8,6 @@ abstract class AbstractModel extends Model
 {
     protected $connectionName = 'mysql';
 
-    public function getConnectionName()
-    {
-        return $this->connectionName;
-    }
-
     public function setConnectionName( $name )
     {
         $this->connectionName = $name;
