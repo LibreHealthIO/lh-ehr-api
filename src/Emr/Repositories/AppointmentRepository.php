@@ -113,8 +113,24 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     {
         $pass = true;
         foreach ( $constraints as $constraint ) {
-            $constraintTimestamp = strtotime($constraint[2]);
+
+            if ( $constraint[0] != 'DATE' &&
+                $constraint[0] != 'DATETIME' ) {
+                continue;
+            }
+
             $constraintOperator = $constraint[1];
+
+            // Check to see if the constraint has a time, if it doesn't can be all day
+            if ( $constraint[0] == 'DATE' &&
+                strpos( $constraintOperator, '<' ) !== false ) {
+                $constraintTimestamp = strtotime($constraint[2]." 23:59" );
+            } else if ( $constraint[0] == 'DATE' &&
+                strpos( $constraintOperator, '>' ) !== false ) {
+                $constraintTimestamp = strtotime($constraint[2]." 00:00" );
+            } else {
+                $constraintTimestamp = strtotime($constraint[2]);
+            }
 
             // slot must start before constraint timestamp
             if ($constraintOperator == '<=' &&
@@ -474,9 +490,14 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     {
         $conditions = [];
         $conditions['pc_aid'] = ['pc_aid', '=', $data['provider']];
-        $conditionTemplate = 'CONCAT(pc_eventDate,\' \',pc_startTime)';
+        $conditionTemplate = 'DATE';
 
         foreach($data as $k => $ln) {
+
+            if ( strpos( $ln, 'T' ) !== false ) {
+                $conditionTemplate = 'DATETIME';
+            }
+
             if (strpos($ln, 'le') !== false) {
                 $conditions['le'] = [ $conditionTemplate, '<=', $this->getDate( $ln ) ];
             }
