@@ -99,6 +99,16 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         return $appointmentInterface;
     }
 
+    /**
+     * @param $slotStartTime
+     * @param $slotEndTime
+     * @param $constraints
+     * @return bool
+     *
+     * Check the start time and end time against the constraints and make sure
+     * that the start time and end break any constraints
+     *
+     */
     protected function checkConstraints( $slotStartTime, $slotEndTime, $constraints )
     {
         $pass = true;
@@ -116,11 +126,11 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                 $pass = false;
                 break;
             } else if ($constraintOperator == '>=' &&
-                $slotStartTime < $constraintTimestamp ) {
+                $slotEndTime < $constraintTimestamp ) {
                 $pass = false;
                 break;
             } else if ($constraintOperator == '>' &&
-                $slotStartTime <= $constraintTimestamp ) {
+                $slotEndTime <= $constraintTimestamp ) {
                 $pass = false;
                 break;
             }
