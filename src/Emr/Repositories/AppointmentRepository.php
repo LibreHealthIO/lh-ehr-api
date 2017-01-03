@@ -132,21 +132,22 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                 $constraintTimestamp = strtotime($constraint[2]);
             }
 
+
             // slot must start before constraint timestamp
             if ($constraintOperator == '<=' &&
-                $slotStartTime > $constraintTimestamp ) {
+                $slotEndTime > $constraintTimestamp ) {
                 $pass = false;
                 break;
             } else if ($constraintOperator == '<' &&
-                $slotStartTime >= $constraintTimestamp ) {
+                $slotEndTime >= $constraintTimestamp ) {
                 $pass = false;
                 break;
             } else if ($constraintOperator == '>=' &&
-                $slotEndTime < $constraintTimestamp ) {
+                $slotStartTime < $constraintTimestamp ) {
                 $pass = false;
                 break;
             } else if ($constraintOperator == '>' &&
-                $slotEndTime <= $constraintTimestamp ) {
+                $slotStartTime <= $constraintTimestamp ) {
                 $pass = false;
                 break;
             }
@@ -186,7 +187,6 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         $constraints = $this->provideSlotConditions( $data );
         $from_date = $this->findSmallest( $constraints );
         $to_date = $this->findBiggest( $constraints );
-
         $allEvents = DB::connection($this->connection)->table( 'libreehr_postcalendar_events' );
 //        if ( $constraints['pc_aid'] ) {
 //            $allEvents->where(   );
@@ -325,14 +325,15 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         }
 
         usort($events2, function ($a, $b) {
-            return strtotime($a->pc_eventDate) - strtotime($b->pc_eventDate);
+            return strtotime($a->pc_eventDate.' '.$a->pc_startTime) - strtotime($b->pc_eventDate.' '.$b->pc_startTime);
         });
 
         // Break down all events into slots
         $availableSlots = array();
         $otherEvents = $events2;
-        for ( $i = 0; $i < count( $events2 ); $i++ ) {
-            $event = $events2[$i];
+        for ( $iEvent = 0; $iEvent < count( $events2 ); $iEvent++ ) {
+            $event = $events2[$iEvent];
+
             if ( $event->pc_catid == 2 ) { // In Office
 
                 // Start the slot counter at the start of the event
@@ -348,13 +349,15 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                     $endTime = strtotime($endDate . ' ' . $event->pc_endTime);
                     $duration = $event->pc_duration;
                 } else {
+
                     $eventSearchOut = $events2;
-                    for ( $iSearch = $i; $iSearch < count($eventSearchOut); $iSearch++ ) {
+                    for ( $iSearch = $iEvent; $iSearch < count($eventSearchOut); $iSearch++ ) {
                         $searchOutEvent = $eventSearchOut[$iSearch];
                         if ( $searchOutEvent->pc_catid == 3 ) { // OUt of office
                             $endDate = $searchOutEvent->pc_eventDate;
                             $endTime = strtotime($endDate . ' ' . $searchOutEvent->pc_startTime);
                             $duration = ( $endTime - $slotStartTime );
+
                             break;
                         }
                     }
@@ -362,7 +365,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
                 // Iterate over this in-office slot in increments of Slot Duration until we reach the Event duration,
                 // OR the end of the in-office event
-                for ( $i = 0; ( $i < $duration && $i < $endTime ); $i += $this->getGlobalCalendarInterval()*60  ) {
+                for ( $i = 0; ( $i < $duration  ); $i += $this->getGlobalCalendarInterval()*60  ) {
 
                     $isAvailable = true;
 
