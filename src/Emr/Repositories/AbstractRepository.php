@@ -34,6 +34,11 @@ abstract class AbstractRepository implements RepositoryInterface
         return $this->connection = $connection;
     }
 
+    public function getConnection()
+    {
+        return $this->connection;
+    }
+
     /**
      * Specify Model class name
      *

@@ -8,16 +8,12 @@
 
 namespace LibreEHR\Core\Emr\Repositories;
 
-use Carbon\Carbon;
-use LibreEHR\Core\Contracts\DocumentRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 use LibreEHR\Core\Contracts\AppointmentInterface;
 use LibreEHR\Core\Contracts\AppointmentRepositoryInterface;
-use Illuminate\Support\Facades\App;
-use LibreEHR\Core\Emr\Criteria\DocumentByPid;
 use LibreEHR\Core\Emr\Eloquent\AppointmentData as Appointment;
-use LibreEHR\Core\Emr\Finders\Finder;
-use LibreEHR\Core\Lib\Date\DateCalc;
+use LibreEHR\Core\Emr\Eloquent\PatientTracker;
+use LibreEHR\Core\Emr\Eloquent\PatientTrackerElement;
 
 class AppointmentRepository extends AbstractRepository implements AppointmentRepositoryInterface
 {
@@ -51,6 +47,15 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         return $appointmentInterface;
     }
 
+    private function encodeStatus($status)
+    {
+        $conditions= [
+            0 => ['mapping', 'like', $status],
+            1 => ['list_id', 'like', 'apptstat']
+        ];
+        return DB::connection($this->connection)->table('list_options')->where($conditions)->value('option_id');
+    }
+
     public function update($id, $data)
     {
 
@@ -60,6 +65,47 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         foreach ($data as $k => $ln) {
             if ($k == 'status') {
                 $appointmentInterface->setPcApptStatus($ln);
+                $patientTracker = new PatientTracker();
+                $patientTracker->setConnectionName( $this->connection );
+                $patientTracker = $patientTracker->where( 'eid', $appointmentInterface->getId() )->first();
+
+                $ptid = null;
+                if ( $patientTracker ) {
+                    $ptid = $patientTracker->id;
+                } else {
+                    // Doens't exist need to create
+                    $patientTracker = new PatientTracker();
+                    $patientTracker->setConnectionName( $this->connection );
+                    $patientTracker->date = date( 'Y-m-d H:i:s' );
+                    $patientTracker->apptdate = $appointmentInterface->getPcEventDate();
+                    $patientTracker->appttime = $appointmentInterface->pc_startTime;
+                    $patientTracker->eid = $appointmentInterface->getId();
+                    $patientTracker->pid = $appointmentInterface->getPatientId();
+                    $patientTracker->original_user = 'admin';
+                    $patientTracker->encounter = 0;
+                    $patientTracker->lastseq = 1;
+                    $ptid = $patientTracker->save();
+                    $ptid = $patientTracker->id;
+                }
+
+                $trackerElement = new PatientTrackerElement();
+                $trackerElement->setConnectionName( $this->connection );
+                $elements = $trackerElement->where( 'pt_tracker_id', $ptid )->get();
+                $maxseq = 0;
+                foreach ( $elements as $element ) {
+                    $maxseq = max( $maxseq, $element->seq );
+                }
+                $trackerElement->pt_tracker_id = $ptid;
+                $trackerElement->start_datetime = date( 'Y-m-d H:i' );
+                $trackerElement->room = '';
+                $trackerElement->status = $this->encodeStatus( $ln );
+                $trackerElement->seq = $maxseq + 1;
+                $trackerElement->user = 'admin';
+                $trackerElement->save();
+
+                $patientTracker->lastseq = $trackerElement->seq;
+                $patientTracker->save();
+
             }
             if ($k == 'description') {
                 $appointmentInterface->setDescription($ln);

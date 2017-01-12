@@ -9,14 +9,17 @@ use LibreEHR\Core\Contracts\AppointmentInterface;
 class AppointmentData extends Model implements AppointmentInterface
 {
     protected $connection = 'mysql';
-
     protected $table = 'libreehr_postcalendar_events';
-
     protected $primaryKey = 'pc_eid';
 
     protected $listId = 'apptstat';
 
     public $timestamps = false;
+
+    public function patientTracker()
+    {
+        return $this->hasOne( 'LibreEHR\Core\Emr\Eloquent\PatientTracker', 'eid', 'pc_eid' );
+    }
 
     public function getId()
     {

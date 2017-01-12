@@ -20,7 +20,10 @@ interface ProviderInterface extends ModelInterface
     public function setState($state);
     public function getCountry();
     public function setCountry($country);
+    public function getName();
     public function setName($practiceName);
     public function getEmrId();
     public function setEmrId($emrId);
+    public function getConnectionKey();
+    public function setConnectionKey( $key );
 }
