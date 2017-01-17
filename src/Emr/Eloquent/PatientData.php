@@ -83,12 +83,12 @@ class PatientData extends Model implements PatientInterface
 
     public function getPrimaryPhone()
     {
-        return $this->phone_home;
+        return $this->phone_cell;
     }
 
     public function setPrimaryPhone( $phone )
     {
-        $this->phone_home = $phone;
+        $this->phone_cell = $phone;
         return $this;
     }
 
