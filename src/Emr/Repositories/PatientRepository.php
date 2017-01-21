@@ -39,6 +39,13 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
         return $patient->where('pid', $pid)->first();
     }
 
+    public function fetchByStatus( $status )
+    {
+        $patient = $this->makeModel();
+        $patient->setConnection( $this->connection );
+        return $patient->where('reg_status', $status)->get();
+    }
+
     public function get( $id )
     {
         $patient = $this->makeModel();
@@ -140,7 +147,7 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
     {
         return DB::connection($this->connection)->table('patient_data')
             ->where( 'pid', '=', $id )
-            ->update(['reg_status' => 'deleted']);
+            ->update(['reg_status' => 'inactive']);
     }
 
 }

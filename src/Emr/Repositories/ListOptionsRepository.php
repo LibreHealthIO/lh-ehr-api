@@ -19,7 +19,10 @@ class ListOptionsRepository extends AbstractRepository
     public function fetchOptionsByListId( $listId )
     {
         $model = $this->makeModel();
-        $results = $model->where( 'list_id', '=', $listId )->get();
+        $results = $model->where( 'list_id', '=', $listId )
+            ->orderBy( 'seq', 'asc' )
+            ->orderBy( 'title', 'asc' )
+            ->get();
         return $this->processResult( $results );
     }
 
