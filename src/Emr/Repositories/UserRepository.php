@@ -14,15 +14,18 @@ class UserRepository extends AbstractRepository
         return '\LibreEHR\Core\Emr\Eloquent\User';
     }
 
-    public function fetchProviders()
+    public function fetchProviders( $fetchInactive = false )
     {
-        $model = $this->makeModel();
-        $result = $model->where( [
+        $params = [
             [ 'id', '>', '1' ],
-            [ 'active', '=', '1' ],
             [ 'authorized', '=', '1' ],
             [ 'calendar', '=', '1' ]
-        ])->get();
+        ];
+        if ( $fetchInactive === false ) {
+            $params []= [ 'active', '=', '1' ];
+        }
+        $model = $this->makeModel();
+        $result = $model->where($params )->get();
         return $result;
     }
 }
