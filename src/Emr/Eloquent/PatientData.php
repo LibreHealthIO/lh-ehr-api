@@ -209,6 +209,8 @@ class PatientData extends Model implements PatientInterface
 
         if ( $this->street_2 ) {
             $streets []= $this->street_2;
+        } else {
+            $streets []= "";
         }
 
         return $streets;
