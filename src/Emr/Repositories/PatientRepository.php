@@ -58,7 +58,7 @@ class PatientRepository extends AbstractRepository implements PatientRepositoryI
         $conditions = [];
         if ( isset($data['groupId']) ) {
             $conditions[] = ['group_id', '=', $data['groupId']];
-            $conditions[] = ['reg_status', '!=', 'deleted'];
+            $conditions[] = ['reg_status', '!=', 'inactive'];
         }
         $model = $this->makeModel();
         return $model->where($conditions)->get();
