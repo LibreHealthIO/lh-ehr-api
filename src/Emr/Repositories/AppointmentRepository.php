@@ -168,15 +168,18 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             $constraintOperator = $constraint[1];
 
             // Check to see if the constraint has a time, if it doesn't can be all day
-            if ( $constraint[0] == 'DATE' &&
+            if ( strlen( $constraint[2] ) <= 10 &&
                 strpos( $constraintOperator, '<' ) !== false ) {
                 $constraintTimestamp = strtotime($constraint[2]." 23:59" );
-            } else if ( $constraint[0] == 'DATE' &&
+            } else if ( strlen( $constraint[2] ) <= 10 &&
                 strpos( $constraintOperator, '>' ) !== false ) {
                 $constraintTimestamp = strtotime($constraint[2]." 00:00" );
             } else {
                 $constraintTimestamp = strtotime($constraint[2]);
             }
+
+            $startFormatted = date( 'Y-m-d h:i', $slotStartTime );
+            $endFormatted = date( 'Y-m-d h:i', $slotEndTime );
 
 
             // slot must start before constraint timestamp
@@ -193,7 +196,8 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                 $pass = false;
                 break;
             } else if ($constraintOperator == '>' &&
-                $slotStartTime <= $constraintTimestamp ) {
+                // $slotStartTime <= $constraintTimestamp ) { This should eb <= but the gponline app expects first slot on the gt barrier
+                $slotStartTime < $constraintTimestamp ) {
                 $pass = false;
                 break;
             }
@@ -207,7 +211,11 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         $min = null;
         foreach ( $constraints as $key => $constraint ) {
             if ( $key == 'gt' || $key == 'ge' ) {
-                $min = substr( $constraint[2], 0, 10 );
+                if ( strlen( $constraint[2] ) <= 10 ) {
+                    $min = substr( $constraint[2], 0, 10 ) . " 00:00";
+                } else {
+                    $min = $constraint[2];
+                }
                 break;
             }
         }
@@ -218,18 +226,69 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     public function findBiggest( $constraints )
     {
         $max = null;
+        $le = false;
         foreach ( $constraints as $key => $constraint ) {
             if ( $key == 'lt' || $key == 'le' ) {
-                $max = substr( $constraint[2], 0, 10 );
+                if ( strlen( $constraint[2] ) <= 10 ) {
+                    $max = substr( $constraint[2], 0, 10 )." 23:59";
+                } else {
+                    $max = $constraint[2];
+                }
+                if ( $key == 'le' ) {
+                    $le = true;
+                }
                 break;
             }
+        }
+
+        if ( $le ) {
+            $maxplusone = strtotime( $max ) + (24 * 60 * 60);
+            $max = date( 'Y-m-d H:i', $maxplusone );
         }
 
         return $max;
     }
 
+    protected $slots, $slotsecs, $slotstime, $slotbase, $slotcount, $input_catid;
+
+    // Record an event into the slots array for a specified day.
+    public function doOneDay( $catid, $udate, $starttime, $duration, $prefcatid, $apptstatus )
+    {
+        $udate = strtotime( $starttime, $udate );
+        if ( $udate < $this->slotstime ) return;
+        $i = (int)($udate / $this->slotsecs) - $this->slotbase;
+        $iend = (int)(($duration + $this->slotsecs - 1) / $this->slotsecs) + $i;
+        if ( $iend > $this->slotcount ) $iend = $this->slotcount;
+        if ( $iend <= $i ) $iend = $i + 1;
+        for ( ; $i < $iend; ++$i ) {
+            if ( $catid == 2 ) {        // in office
+                // If a category ID was specified when this popup was invoked, then select
+                // only IN events with a matching preferred category or with no preferred
+                // category; other IN events are to be treated as OUT events.
+                if ( $this->input_catid ) {
+                    if ( $prefcatid == $this->input_catid || !$prefcatid )
+                        $this->slots[ $i ] |= 1;
+                    else
+                        $this->slots[ $i ] |= 2;
+                } else {
+                    $this->slots[ $i ] |= 1;
+                }
+                break; // ignore any positive duration for IN
+            } else if ( $catid == 3 ) { // out of office
+                $this->slots[ $i ] |= 2;
+                break; // ignore any positive duration for OUT
+            } else if ( $catid == 5 &&
+                    ( $apptstatus == '^' || $apptstatus == 'x' || $apptstatus == '-' ) ) {
+                $this->slots[ $i ] |= 1; // can still book
+            } else { // all others reserve time
+                $this->slots[ $i ] |= 4;
+            }
+        }
+    }
+
     public function getSlots( $data )
     {
+        $this->slots = $this->slotsecs = $this->slotstime = $this->slotbase = $this->slotcount = $this->input_catid = null;
         $constraints = $this->provideSlotConditions( $data );
         $from_date = $this->findSmallest( $constraints );
         $to_date = $this->findBiggest( $constraints );
@@ -237,224 +296,187 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 //        if ( $constraints['pc_aid'] ) {
 //            $allEvents->where(   );
 //        }
-        $allEvents->where([
-            [ 'pc_aid', '=', $constraints['pc_aid'][2] ],
-            [ 'pc_endDate', '>=', $from_date ],
-            [ 'pc_eventDate', '<=', $to_date ],
-            [ 'pc_recurrtype', '>', 0 ] ]);
-        $allEvents->orWhere([
-            [ 'pc_eventDate', '>=', $from_date ],
-            [ 'pc_eventDate', '<=', $to_date ] ]);
+        $allEvents->where( function ( $query ) {
+            // match provider ID
+        })->where( function ( $query ) use ( $from_date, $to_date ) {
+            // match Dates
+                $query->where( [
+                    [ 'pc_endDate', '>=', substr( $from_date, 0, 10 ) ],
+                    [ 'pc_eventDate', '<=', substr( $to_date, 0, 10 ) ] ] )
+                 ->orWhere( [
+                     [ 'pc_endDate', '=', '0000-00-00' ],
+                     [ 'pc_eventDate', '>=', substr( $from_date, 0, 10 ) ],
+                     [ 'pc_eventDate', '<=', substr( $to_date, 0, 10 ) ] ] );
+        });
+
         $allEvents = $allEvents->get()->toArray();
 
         $events2 = [];
 
-        foreach ( $allEvents as $slot ) {
-            $nextX = false;
-            if($nextX) {
-                $stopDate = $slot->pc_endDate;
-            } else $stopDate = ($slot->pc_endDate <= $to_date) ? $slot->pc_endDate : $to_date;
-            ///////
-            $incX = 0;
+        // seconds per time slot
+        $this->slotsecs = $this->getGlobalCalendarInterval()*60;
 
-            switch ($slot->pc_recurrtype) {
-                case '0':
-                    $events2[] = $slot;
-                    break;
+        $catslots = 1;
+//        if ($input_catid) {
+//            $srow = sqlQuery("SELECT pc_duration FROM libreehr_postcalendar_categories WHERE pc_catid = ?", array($input_catid) );
+//            if ($srow['pc_duration']) $catslots = ceil($srow['pc_duration'] / $slotsecs);
+//        }
 
-                case '1':
-                    $event_recurrspec = @unserialize($slot->pc_recurrspec);
-                    $rfreq = $event_recurrspec['event_repeat_freq'];
-                    $rtype = $event_recurrspec['event_repeat_freq_type'];
-                    $exdate = $event_recurrspec['exdate'];
+        // compute starting time slot number and number of slots.
+        $this->slotstime = strtotime( substr( $from_date, 0, 10 ) );
+        $this->slotetime = strtotime( substr( $to_date, 0, 10 ) );
+        $this->slotbase  = (int) ($this->slotstime / $this->slotsecs);
+        $this->slotcount = (int) ($this->slotetime / $this->slotsecs) - $this->slotbase;
 
-                    list($ny,$nm,$nd) = explode('-', $slot->pc_eventDate);
-                    $occurance = $slot->pc_eventDate;
+        if ($this->slotcount <= 0 || $this->slotcount > 100000) die(xlt("Invalid date range"));
 
-                    while ($occurance < $from_date) {
-                        $occurance =$this->increment($nd, $nm, $ny, $rfreq, $rtype);
-                        list($ny, $nm, $nd) = explode('-', $occurance);
+        $slotsperday = (int) (60 * 60 * 24 / $this->slotsecs);
+
+        // Compute the number of time slots for the given event duration, or if
+        // none is given then assume the default category duration.
+        $evslots = $catslots;
+//        if (isset($_REQUEST['evdur'])) {
+//            $evslots = 60 * $_REQUEST['evdur'];
+//            $evslots = (int) (($evslots + $slotsecs - 1) / $slotsecs);
+//        }
+
+
+        // Create and initialize the slot array. Values are bit-mapped:
+        //   bit 0 = in-office occurs here
+        //   bit 1 = out-of-office occurs here
+        //   bit 2 = reserved
+        // So, values may range from 0 to 7.
+        //
+        $this->slots = array_pad(array(), $this->slotcount, 0);
+
+        foreach ( $allEvents as $row ) {
+            $thistime = strtotime($row->pc_eventDate . " 00:00:00");
+            if ($row->pc_recurrtype) {
+
+                preg_match('/"event_repeat_freq_type";s:1:"(\d)"/', $row->pc_recurrspec, $matches);
+                $repeattype = $matches[1];
+
+                preg_match('/"event_repeat_freq";s:1:"(\d)"/', $row->pc_recurrspec, $matches);
+                $repeatfreq = $matches[1];
+                if ($row->pc_recurrtype == 2) {
+                    // Repeat type is 2 so frequency comes from event_repeat_on_freq.
+                    preg_match('/"event_repeat_on_freq";s:1:"(\d)"/', $row->pc_recurrspec, $matches);
+                    $repeatfreq = $matches[1];
+                }
+                if (! $repeatfreq) $repeatfreq = 1;
+
+                preg_match('/"event_repeat_on_num";s:1:"(\d)"/', $row->pc_recurrspec, $matches);
+                $my_repeat_on_num = $matches[1];
+
+                preg_match('/"event_repeat_on_day";s:1:"(\d)"/', $row->pc_recurrspec, $matches);
+                $my_repeat_on_day = $matches[1];
+
+                // This gets an array of exception dates for the event.
+                $exdates = array();
+                if (preg_match('/"exdate";s:\d+:"([0-9,]*)"/', $row->pc_recurrspec, $matches)) {
+                    $exdates = explode(",", $matches[1]);
+                }
+
+                $endtime = strtotime($row->pc_endDate . " 00:00:00") + (24 * 60 * 60);
+                if ($endtime > $this->slotetime) $endtime = $this->slotetime;
+
+                $repeatix = 0;
+                while ($thistime < $endtime) {
+                    $adate = getdate($thistime);
+                    $thisymd = sprintf('%04d%02d%02d', $adate['year'], $adate['mon'], $adate['mday']);
+
+                    // Skip the event if a repeat frequency > 1 was specified and this is
+                    // not the desired occurrence, or if this date is in the exception array.
+                    if (!$repeatix && !in_array($thisymd, $exdates)) {
+                        $this->doOneDay($row->pc_catid, $thistime, $row->pc_startTime,
+                            $row->pc_duration, $row->pc_prefcatid, $row->pc_apptstatus);
                     }
+                    if (++$repeatix >= $repeatfreq) $repeatix = 0;
 
-                    while ($occurance <= $stopDate) {
-                        $excluded = false;
-                        if (!empty($exdate)) {
-                            foreach (explode(",", $exdate) as $exception) {
-                                // occurrance format == yyyy-mm-dd
-                                // exception format == yyyymmdd
-                                if (preg_replace("/-/", "", $occurance) == $exception) {
-                                    $excluded = true;
-                                }
-                            }
+                    if ($row->pc_recurrtype == 2) {
+                        // Need to skip to nth or last weekday of the next month.
+                        $adate['mon'] += 1;
+                        if ($adate['mon'] > 12) {
+                            $adate['year'] += 1;
+                            $adate['mon'] -= 12;
                         }
-
-                        if ($excluded == false) {
-                            $slot->pc_eventDate = $occurance;
-                            $slot->pc_endDate = '0000-00-00';
-                            $events2[] = clone $slot;
-                            //////
-                            if ($nextX) {
-                                ++$incX;
-                                if ($incX == $nextX) {
-                                    break;
-                                }
-                            }
-                            //////
+                        if ($my_repeat_on_num < 5) { // not last
+                            $adate['mday'] = 1;
+                            $dow = jddayofweek(cal_to_jd(CAL_GREGORIAN, $adate['mon'], $adate['mday'], $adate['year']));
+                            if ($dow > $my_repeat_on_day) $dow -= 7;
+                            $adate['mday'] += ($my_repeat_on_num - 1) * 7 + $my_repeat_on_day - $dow;
                         }
-
-                        $occurance = $this->increment($nd, $nm, $ny, $rfreq, $rtype);
-                        list($ny,$nm,$nd) = explode('-', $occurance);
-
-                    }
-                    break;
-
-                case '2':
-                    $event_recurrspec = @unserialize($slot->pc_recurrspec);
-                    $rfreq = $event_recurrspec['event_repeat_on_freq'];
-                    $rnum  = $event_recurrspec['event_repeat_on_num'];
-                    $rday  = $event_recurrspec['event_repeat_on_day'];
-                    $exdate = $event_recurrspec['exdate'];
-
-                    list($ny,$nm,$nd) = explode('-', $slot->pc_eventDate);
-
-                    $occuranceYm = "$ny-$nm"; // YYYY-mm
-                    $from_dateYm = substr($from_date, 0, 7); // YYYY-mm
-                    $stopDateYm = substr($stopDate, 0, 7); // YYYY-mm
-
-                    // $nd will sometimes be 29, 30 or 31, and if used in mktime below, a problem
-                    // with overflow will occur ('01' should be plugged in to avoid this). We need
-                    // to mirror the calendar code which has this problem, so $nd has been used.
-                    while ($occuranceYm < $from_dateYm) {
-                        $occuranceYmX = date('Y-m-d', mktime(0, 0, 0, $nm+$rfreq, $nd, $ny));
-                        list($ny,$nm,$nd) = explode('-', $occuranceYmX);
-                        $occuranceYm = "$ny-$nm";
-                    }
-
-                    while ($occuranceYm <= $stopDateYm) {
-                        // (YYYY-mm)-dd
-                        $dnum = $rnum;
-                        $occurance = $slot->pc_eventDate;
-                        if ($occurance >= $from_date && $occurance <= $stopDate) {
-                            $excluded = false;
-                            if (isset($exdate)) {
-                                foreach (explode(",", $exdate) as $exception) {
-                                    // occurrance format == yyyy-mm-dd
-                                    // exception format == yyyymmdd
-                                    if (preg_replace("/-/", "", $occurance) == $exception) {
-                                        $excluded = true;
-                                    }
-                                }
-                            }
-                            if ($excluded == false) {
-                                $slot->pc_eventDate = $occurance;
-                                $slot->pc_endDate = '0000-00-00';
-                                $events2[] = clone $slot;
-
-                                if ($nextX) {
-                                    ++$incX;
-                                    if ($incX == $nextX) {
-                                        break;
-                                    }
-                                }
-                            }
-
+                        else { // last weekday of month
+                            $adate['mday'] = cal_days_in_month(CAL_GREGORIAN, $adate['mon'], $adate['year']);
+                            $dow = jddayofweek(cal_to_jd(CAL_GREGORIAN, $adate['mon'], $adate['mday'], $adate['year']));
+                            if ($dow < $my_repeat_on_day) $dow += 7;
+                            $adate['mday'] += $my_repeat_on_day - $dow;
                         }
+                    } // end recurrtype 2
 
-                        $occuranceYmX = date('Y-m-d', mktime(0, 0, 0, $nm+$rfreq, $nd, $ny));
-                        list($ny, $nm, $nd) = explode('-', $occuranceYmX);
-                        $occuranceYm = "$ny-$nm";
+                    else { // recurrtype 1
+                        if ($repeattype == 0)        { // daily
+                            $adate['mday'] += 1;
+                        } else if ($repeattype == 1) { // weekly
+                            $adate['mday'] += 7;
+                        } else if ($repeattype == 2) { // monthly
+                            $adate['mon'] += 1;
+                        } else if ($repeattype == 3) { // yearly
+                            $adate['year'] += 1;
+                        } else if ($repeattype == 4) { // work days
+                            if ($adate['wday'] == 5)      // if friday, skip to monday
+                                $adate['mday'] += 3;
+                            else if ($adate['wday'] == 6) // saturday should not happen
+                                $adate['mday'] += 2;
+                            else
+                                $adate['mday'] += 1;
+                        } else {
+                            die("Invalid repeat type '" . text($repeattype) ."'");
+                        }
+                    } // end recurrtype 1
 
-                    }
-
-                    break;
+                    $thistime = mktime(0, 0, 0, $adate['mon'], $adate['mday'], $adate['year']);
+                }
+            } else {
+                $this->doOneDay($row->pc_catid, $thistime, $row->pc_startTime,
+                    $row->pc_duration, $row->pc_prefcatid, $row->pc_apptstatus);
             }
         }
 
-        usort($events2, function ($a, $b) {
-            return strtotime($a->pc_eventDate.' '.$a->pc_startTime) - strtotime($b->pc_eventDate.' '.$b->pc_startTime);
-        });
+        // Mark all slots reserved where the provider is not in-office.
+        // Actually we could do this in the display loop instead.
+        $inoffice = false;
+        for ($i = 0; $i < $this->slotcount; ++$i) {
+            if (($i % $slotsperday) == 0) $inoffice = false;
+            if ($this->slots[$i] & 1) $inoffice = true;
+            if ($this->slots[$i] & 2) $inoffice = false;
+            if (! $inoffice) { $this->slots[$i] |= 4; $prov[$i] = $i; }
+        }
 
-        // Break down all events into slots
         $availableSlots = array();
-        $otherEvents = $events2;
-        for ( $iEvent = 0; $iEvent < count( $events2 ); $iEvent++ ) {
-            $event = $events2[$iEvent];
+        for ($i = 0; $i < $this->slotcount; ++$i) {
 
-            if ( $event->pc_catid == 2 ) { // In Office
-
-                // Start the slot counter at the start of the event
-                $slotStartTime = strtotime( $event->pc_eventDate . ' ' . $event->pc_startTime );
-                $slotEndTime = $slotStartTime + $this->getGlobalCalendarInterval()*60;
-
-                $endDate = null;
-                $endTime = null;
-                $duration = null;
-                // Find the next out-of-offiece event if the in-office event doesn't have a duration
-                if ( $event->pc_duration ) {
-                    $endDate = $event->pc_endDate == '0000-00-00' ? $event->pc_eventDate : $event->pc_endDate;
-                    $endTime = strtotime($endDate . ' ' . $event->pc_endTime);
-                    $duration = $event->pc_duration;
-                } else {
-
-                    $eventSearchOut = $events2;
-                    for ( $iSearch = $iEvent; $iSearch < count($eventSearchOut); $iSearch++ ) {
-                        $searchOutEvent = $eventSearchOut[$iSearch];
-                        if ( $searchOutEvent->pc_catid == 3 ) { // OUt of office
-                            $endDate = $searchOutEvent->pc_eventDate;
-                            $endTime = strtotime($endDate . ' ' . $searchOutEvent->pc_startTime);
-                            $duration = ( $endTime - $slotStartTime );
-
-                            break;
-                        }
-                    }
-                }
-
-                // Iterate over this in-office slot in increments of Slot Duration until we reach the Event duration,
-                // OR the end of the in-office event
-                for ( $i = 0; ( $i < $duration  ); $i += $this->getGlobalCalendarInterval()*60  ) {
-
-                    $isAvailable = true;
-
-                    if ( !$this->checkConstraints( $slotStartTime, $slotEndTime, $constraints ) ) {
-                        $isAvailable = false;
-                    }
-
-                    if ( $isAvailable ) {
-                        // Search for a blocked-out time that would make this slot unavailable
-                        foreach ($otherEvents as $otherEvent) {
-                            if ($otherEvent->pc_apptstatus == '*' ||
-                                $otherEvent->pc_apptstatus == '=' ||
-                                $otherEvent->pc_catid == 8 ||
-                                $otherEvent->pc_catid == 4 ||
-                                $otherEvent->pc_catid == 11
-                            ) {
-
-                                $otherStartTime = strtotime($otherEvent->pc_eventDate . ' ' . $otherEvent->pc_startTime);
-                                $endDate = $otherEvent->pc_endDate == '0000-00-00' ? $otherEvent->pc_eventDate : $otherEvent->pc_endDate;
-                                $otherEndTime = strtotime($endDate . ' ' . $otherEvent->pc_endTime);
-                                if ($otherStartTime < $slotEndTime &&
-                                    $otherEndTime > $slotStartTime
-                                ) {
-                                    $isAvailable = false;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    if ( $isAvailable ) {
-                        $availableSlots[] = [
-                            'startTimestamp' => $slotStartTime,
-                            'endTimestamp' => $slotEndTime,
-                            'status' => 'available',
-                        ];
-                    }
-
-                    // Move the slot start and end times
-                    $slotStartTime += $this->getGlobalCalendarInterval() * 60;
-                    $slotEndTime += $this->getGlobalCalendarInterval() * 60;
-                }
+            $available = true;
+            for ($j = $i; $j < $i + $evslots; ++$j) {
+                if ($this->slots[$j] >= 4) $available = false;
             }
+            if (!$available) continue; // skip reserved slots
+
+            $utime = ($this->slotbase + $i) * $this->slotsecs;
+
+            if ( !$this->checkConstraints( $utime, $utime + $this->slotsecs, $constraints ) ) {
+                continue;
+            }
+
+            $availableSlots[] = [
+                'startTimestamp' => $utime,
+                'endTimestamp' => $utime + $this->slotsecs,
+                'status' => 'available',
+            ];
+
+            // If the duration is more than 1 slot, increment $i appropriately.
+            // This is to avoid reporting available times on undesirable boundaries.
+            $i += $evslots - 1;
         }
 
         return $availableSlots;
