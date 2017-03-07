@@ -353,9 +353,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         // So, values may range from 0 to 7.
         //
         $this->slots = array_pad(array(), $this->slotcount, 0);
-
-        var_dump($this);
-
+        
         foreach ( $allEvents as $row ) {
             $thistime = strtotime($row->pc_eventDate . " 00:00:00");
             if ($row->pc_recurrtype) {
