@@ -296,17 +296,20 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 //        if ( $constraints['pc_aid'] ) {
 //            $allEvents->where(   );
 //        }
-        $allEvents->where( function ( $query ) {
+        $providerId = $data['provider'];
+        $allEvents->where( function ( $query ) use ( $providerId ) {
             // match provider ID
+            $query->where( [
+                ['pc_aid', '=', $providerId ] ] );
         })->where( function ( $query ) use ( $from_date, $to_date ) {
             // match Dates
-                $query->where( [
-                    [ 'pc_endDate', '>=', substr( $from_date, 0, 10 ) ],
-                    [ 'pc_eventDate', '<=', substr( $to_date, 0, 10 ) ] ] )
-                 ->orWhere( [
-                     [ 'pc_endDate', '=', '0000-00-00' ],
-                     [ 'pc_eventDate', '>=', substr( $from_date, 0, 10 ) ],
-                     [ 'pc_eventDate', '<=', substr( $to_date, 0, 10 ) ] ] );
+            $query->where( [
+                [ 'pc_endDate', '>=', substr( $from_date, 0, 10 ) ],
+                [ 'pc_eventDate', '<=', substr( $to_date, 0, 10 ) ] ] )
+             ->orWhere( [
+                 [ 'pc_endDate', '=', '0000-00-00' ],
+                 [ 'pc_eventDate', '>=', substr( $from_date, 0, 10 ) ],
+                 [ 'pc_eventDate', '<=', substr( $to_date, 0, 10 ) ] ] );
         });
 
         $allEvents = $allEvents->get()->toArray();
