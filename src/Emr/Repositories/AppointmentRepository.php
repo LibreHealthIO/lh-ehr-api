@@ -261,6 +261,8 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         if ( $iend > $this->slotcount ) $iend = $this->slotcount;
         if ( $iend <= $i ) $iend = $i + 1;
         for ( ; $i < $iend; ++$i ) {
+            if ( $iend > $this->slotcount ) break;
+
             if ( $catid == 2 ) {        // in office
                 // If a category ID was specified when this popup was invoked, then select
                 // only IN events with a matching preferred category or with no preferred
@@ -277,9 +279,10 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             } else if ( $catid == 3 ) { // out of office
                 $this->slots[ $i ] |= 2;
                 break; // ignore any positive duration for OUT
-            } else if ( ( $catid == 5 || $catid == 9 ) &&
-                    ( $apptstatus == '^' || $apptstatus == 'x' || $apptstatus == '-' ) ) {
-                $this->slots[ $i ] |= 1; // can still book
+            //} else if ( ( $catid == 5 || $catid == 9 ) &&
+             //       ( $apptstatus == '^' || $apptstatus == 'x' || $apptstatus == '-' ) ) {
+              //  $this->slots[ $i ] |= 1; // can still book
+             //   break;
             } else { // all others reserve time
                 $this->slots[ $i ] |= 4;
             }
@@ -300,7 +303,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         $allEvents->where( function ( $query ) use ( $providerId ) {
             // match provider ID
             $query->where( [
-                ['pc_aid', '=', $providerId ] ] );
+                [ 'pc_aid', '=', $providerId ] ] );
         })->where( function ( $query ) use ( $from_date, $to_date ) {
             // match Dates
             $query->where( [
