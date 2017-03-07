@@ -277,7 +277,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             } else if ( $catid == 3 ) { // out of office
                 $this->slots[ $i ] |= 2;
                 break; // ignore any positive duration for OUT
-            } else if ( $catid == 5 &&
+            } else if ( ( $catid == 5 || $catid == 9 ) &&
                     ( $apptstatus == '^' || $apptstatus == 'x' || $apptstatus == '-' ) ) {
                 $this->slots[ $i ] |= 1; // can still book
             } else { // all others reserve time
