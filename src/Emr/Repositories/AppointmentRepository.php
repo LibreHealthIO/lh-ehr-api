@@ -279,10 +279,9 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             } else if ( $catid == 3 ) { // out of office
                 $this->slots[ $i ] |= 2;
                 break; // ignore any positive duration for OUT
-            //} else if ( ( $catid == 5 || $catid == 9 ) &&
-             //       ( $apptstatus == '^' || $apptstatus == 'x' || $apptstatus == '-' ) ) {
-              //  $this->slots[ $i ] |= 1; // can still book
-             //   break;
+            } else if ( ( $catid == 5 || $catid == 9 ) &&
+                    ( $apptstatus == '^' || $apptstatus == 'x' || $apptstatus == '-' ) ) {
+                $this->slots[ $i ] |= 1; // can still book
             } else { // all others reserve time
                 $this->slots[ $i ] |= 4;
             }
@@ -354,6 +353,8 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         // So, values may range from 0 to 7.
         //
         $this->slots = array_pad(array(), $this->slotcount, 0);
+
+        var_dump($this);
 
         foreach ( $allEvents as $row ) {
             $thistime = strtotime($row->pc_eventDate . " 00:00:00");
