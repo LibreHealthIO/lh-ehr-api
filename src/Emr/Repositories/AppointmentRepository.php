@@ -121,13 +121,23 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                 $location = [];
                 foreach ($extensions as $extension) {
                     $url = $extension['url'];
-                    if ($url == "#provider-id") {
-                        $appointmentInterface->setProviderId(  $extension['valueString'] );
+                    if ($url =="#portal-uri") {
+                        $location['portalUri'] = $extension['valueString'];
                     }
-                    if ($url == "#patient-id") {
+                    if ($url =="#room-key") {
+                        $location['roomKey'] = $extension['valueString'];
+                    }
+                    if ($url =="#pin") {
+                        $location['pin'] = $extension['valueString'];
+                    }
+                    if ($url =="#provider-id") {
+                        $location['providerId'] = $extension['valueString'];
+                    }
+                    if ($url =="#patient-id") {
                         $appointmentInterface->setPatientId($extension['valueString']);
                     }
                 }
+               // $appointmentInterface->setLocation(json_encode($location, true));
             }
         }
 
