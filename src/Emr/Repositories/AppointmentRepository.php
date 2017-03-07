@@ -261,7 +261,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         if ( $iend > $this->slotcount ) $iend = $this->slotcount;
         if ( $iend <= $i ) $iend = $i + 1;
         for ( ; $i < $iend; ++$i ) {
-            if ( $iend > $this->slotcount ) break;
+            if ( $iend >= $this->slotcount ) continue;
 
             if ( $catid == 2 ) {        // in office
                 // If a category ID was specified when this popup was invoked, then select
