@@ -121,23 +121,13 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                 $location = [];
                 foreach ($extensions as $extension) {
                     $url = $extension['url'];
-                    if ($url =="#portal-uri") {
-                        $location['portalUri'] = $extension['valueString'];
+                    if ($url == "#provider-id") {
+                        $appointmentInterface->setProviderId(  $extension['valueString'] );
                     }
-                    if ($url =="#room-key") {
-                        $location['roomKey'] = $extension['valueString'];
-                    }
-                    if ($url =="#pin") {
-                        $location['pin'] = $extension['valueString'];
-                    }
-                    if ($url =="#provider-id") {
-                        $location['providerId'] = $extension['valueString'];
-                    }
-                    if ($url =="#patient-id") {
+                    if ($url == "#patient-id") {
                         $appointmentInterface->setPatientId($extension['valueString']);
                     }
                 }
-                $appointmentInterface->setLocation(json_encode($location, true));
             }
         }
 
@@ -353,7 +343,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         // So, values may range from 0 to 7.
         //
         $this->slots = array_pad(array(), $this->slotcount, 0);
-        
+
         foreach ( $allEvents as $row ) {
             $thistime = strtotime($row->pc_eventDate . " 00:00:00");
             if ($row->pc_recurrtype) {
