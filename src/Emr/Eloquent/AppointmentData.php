@@ -2,6 +2,8 @@
 
 namespace LibreEHR\Core\Emr\Eloquent;
 
+use Illuminate\Support\Facades\Auth;
+
 use LibreEHR\Core\Emr\Eloquent\AbstractModel as Model;
 use Illuminate\Support\Facades\DB;
 use LibreEHR\Core\Contracts\AppointmentInterface;
@@ -218,7 +220,10 @@ class AppointmentData extends Model implements AppointmentInterface
             0 => ['option_id', 'like', $status],
             1 => ['list_id', 'like', $this->listId]
         ];
-        return DB::connection($this->connection)->table('list_options')->where($conditions)->value('mapping');
+        $user = Auth::user();
+        $conn = $user->attributes['connection'];
+        $mapped = DB::connection($conn)->table('list_options')->where($conditions)->value('mapping');
+        return $mapped;
     }
 
     private function encodeStatus($status)
@@ -227,7 +232,10 @@ class AppointmentData extends Model implements AppointmentInterface
             0 => ['mapping', 'like', $status],
             1 => ['list_id', 'like', $this->listId]
         ];
-        return DB::connection($this->connection)->table('list_options')->where($conditions)->value('option_id');
+        $user = Auth::user();
+        $conn = $user->attributes['connection'];
+        $mapped = DB::connection($conn)->table('list_options')->where($conditions)->value('option_id');
+        return $mapped;
     }
 
     private function timeFromTimestamp($timestamp)
