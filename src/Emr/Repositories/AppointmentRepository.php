@@ -8,6 +8,7 @@
 
 namespace LibreEHR\Core\Emr\Repositories;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use LibreEHR\Core\Contracts\AppointmentInterface;
 use LibreEHR\Core\Contracts\AppointmentRepositoryInterface;
@@ -47,14 +48,28 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         return $appointmentInterface;
     }
 
-    private function encodeStatus($status)
+    public function decodeStatus($status)
+    {
+        $conditions= [
+            0 => ['option_id', 'like', $status],
+            1 => ['list_id', 'like', 'apptstat']
+        ];
+        $conn = $this->connection;
+        $mapped = DB::connection($conn)->table('list_options')->where($conditions)->value('mapping');
+        return $mapped;
+    }
+
+    public function encodeStatus($status)
     {
         $conditions= [
             0 => ['mapping', 'like', $status],
             1 => ['list_id', 'like', 'apptstat']
         ];
-        return DB::connection($this->connection)->table('list_options')->where($conditions)->value('option_id');
+        $conn = $this->connection;
+        $mapped = DB::connection($conn)->table('list_options')->where($conditions)->value('option_id');
+        return $mapped;
     }
+
 
     public function update($id, $data)
     {
@@ -64,7 +79,24 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
         $appointmentInterface = $appointment->find($id);
         foreach ($data as $k => $ln) {
             if ($k == 'status') {
-                $appointmentInterface->setPcApptStatus($ln);
+                $encodedStatus = null;
+                if ( $ln == 'cancelled' ) {
+                    // have to decide which cancelled status to use
+                    $now = strtotime("now");
+                    $apptTime = $appointmentInterface->getStartTime();
+                    if ( $apptTime - $now > 0 &&
+                        $apptTime - $now < 86400 ) {
+                        // cancelled with less than 24 hours notice
+                        $encodedStatus = "%";
+                    } else {
+                        // else patient cancelled
+                        $encodedStatus = "!";
+                    }
+
+                } else {
+                    $encodedStatus = $this->encodeStatus( $ln );
+                }
+                $appointmentInterface->setPcApptStatus( $encodedStatus );
                 $patientTracker = new PatientTracker();
                 $patientTracker->setConnectionName( $this->connection );
                 $patientTracker = $patientTracker->where( 'eid', $appointmentInterface->getId() )->first();
@@ -98,7 +130,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
                 $trackerElement->pt_tracker_id = $ptid;
                 $trackerElement->start_datetime = date( 'Y-m-d H:i' );
                 $trackerElement->room = '';
-                $trackerElement->status = $this->encodeStatus( $ln );
+                $trackerElement->status = $encodedStatus;
                 $trackerElement->seq = $maxseq + 1;
                 $trackerElement->user = 'admin';
                 $trackerElement->save();

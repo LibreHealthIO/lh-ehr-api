@@ -2,8 +2,6 @@
 
 namespace LibreEHR\Core\Emr\Eloquent;
 
-use Illuminate\Support\Facades\Auth;
-
 use LibreEHR\Core\Emr\Eloquent\AbstractModel as Model;
 use Illuminate\Support\Facades\DB;
 use LibreEHR\Core\Contracts\AppointmentInterface;
@@ -13,8 +11,6 @@ class AppointmentData extends Model implements AppointmentInterface
     protected $connection = 'mysql';
     protected $table = 'libreehr_postcalendar_events';
     protected $primaryKey = 'pc_eid';
-
-    protected $listId = 'apptstat';
 
     public $timestamps = false;
 
@@ -140,12 +136,12 @@ class AppointmentData extends Model implements AppointmentInterface
 
     public function getPcApptStatus()
     {
-        return $this->decodeStatus($this->pc_apptstatus);
+        return $this->pc_apptstatus;
     }
 
     public function setPcApptStatus($pcApptstatus)
     {
-        $this->pc_apptstatus = $this->encodeStatus($pcApptstatus);
+        $this->pc_apptstatus = $pcApptstatus;
         return $this;
     }
 
@@ -212,30 +208,6 @@ class AppointmentData extends Model implements AppointmentInterface
     {
         $this->pc_multiple = $pc_multiple;
         return $this;
-    }
-
-    private function decodeStatus($status)
-    {
-        $conditions= [
-            0 => ['option_id', 'like', $status],
-            1 => ['list_id', 'like', $this->listId]
-        ];
-        $user = Auth::user();
-        $conn = $user->attributes['connection'];
-        $mapped = DB::connection($conn)->table('list_options')->where($conditions)->value('mapping');
-        return $mapped;
-    }
-
-    private function encodeStatus($status)
-    {
-        $conditions= [
-            0 => ['mapping', 'like', $status],
-            1 => ['list_id', 'like', $this->listId]
-        ];
-        $user = Auth::user();
-        $conn = $user->attributes['connection'];
-        $mapped = DB::connection($conn)->table('list_options')->where($conditions)->value('option_id');
-        return $mapped;
     }
 
     private function timeFromTimestamp($timestamp)
