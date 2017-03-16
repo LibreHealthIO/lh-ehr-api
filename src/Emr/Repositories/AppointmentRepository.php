@@ -286,6 +286,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
     // Record an event into the slots array for a specified day.
     public function doOneDay( $catid, $udate, $starttime, $duration, $prefcatid, $apptstatus )
     {
+        $overbookStatus = $this->getOverbookStatus();
         $udate = strtotime( $starttime, $udate );
         if ( $udate < $this->slotstime ) return;
         $i = (int)($udate / $this->slotsecs) - $this->slotbase;
@@ -311,8 +312,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             } else if ( $catid == 3 ) { // out of office
                 $this->slots[ $i ] |= 2;
                 break; // ignore any positive duration for OUT
-            } else if ( ( $catid == 5 || $catid == 9 ) &&
-                    ( $apptstatus == '^' || $apptstatus == 'x' || $apptstatus == '-' ) ) {
+            } else if ( in_array( $apptstatus, $overbookStatus ) ) {
                 $this->slots[ $i ] |= 1; // can still book
             } else { // all others reserve time
                 $this->slots[ $i ] |= 4;
@@ -652,6 +652,7 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
             ->where('gl_name', 'like', 'calendar_interval')
             ->orWhere('gl_name', 'like', 'schedule_end')
             ->orWhere('gl_name', 'like', 'schedule_start')
+            ->orWhere('gl_name', 'like', 'appt_overbook_statuses')
             ->get();
 
         $emrGlobals = [];
@@ -663,6 +664,12 @@ class AppointmentRepository extends AbstractRepository implements AppointmentRep
 
     public function getGlobalCalendarInterval() {
         return $this->getGlobalSettings()['calendar_interval'];
+    }
+
+    public function getOverbookStatus()
+    {
+        $overbookStatuses = array_map('trim', explode( ',', $this->getGlobalSettings()['appt_overbook_statuses'] ) );
+        return $overbookStatuses;
     }
 
     private function increment($d,$m,$y,$f,$t)
